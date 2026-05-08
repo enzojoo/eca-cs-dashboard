@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>[Demo] CS 운영 현황 대시보드</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+  :root {
+    --bg: #f5f7fa;
+    --panel: #ffffff;
+    --text: #0f172a;
+    --muted: #64748b;
+    --border: #e2e8f0;
+    --primary: #2563eb;
+    --ib: #2563eb;
+    --ob: #f97316;
+    --phone: #2563eb;
+    --chat: #8b5cf6;
+    --mail: #94a3b8;
+    --promote: #10b981;
+    --neutral: #94a3b8;
+    --detract: #ef4444;
+    --shadow: 0 1px 3px rgba(15, 23, 42, 0.06), 0 1px 2px rgba(15, 23, 42, 0.04);
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Pretendard", "Apple SD Gothic Neo",
+                 "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+  .container { max-width: 1400px; margin: 0 auto; padding: 24px; }
+
+  /* Header */
+  .header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 24px; flex-wrap: wrap; gap: 16px; }
+  .header h1 { margin: 0 0 4px; font-size: 22px; font-weight: 700; }
+  .header .meta { color: var(--muted); font-size: 13px; }
+  .header .meta a { color: var(--primary); text-decoration: none; }
+  .header .meta a:hover { text-decoration: underline; }
+  .header .periods { display: flex; gap: 16px; font-size: 12px; }
+  .pill { background: var(--panel); border: 1px solid var(--border); border-radius: 999px; padding: 6px 12px; box-shadow: var(--shadow); }
+  .pill strong { color: var(--text); margin-right: 6px; }
+
+  /* KPI Cards */
+  .kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
+  .kpi { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 18px; box-shadow: var(--shadow); }
+  .kpi .label { color: var(--muted); font-size: 12px; margin-bottom: 8px; }
+  .kpi .value { font-size: 26px; font-weight: 700; }
+  .kpi .sub { color: var(--muted); font-size: 12px; margin-top: 4px; }
+  .kpi.alert .value { color: var(--detract); }
+
+  /* Tabs */
+  .tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--border); margin-bottom: 20px; }
+  .tab { background: transparent; border: 0; padding: 12px 18px; color: var(--muted); cursor: pointer; font-size: 14px; font-weight: 500; border-bottom: 2px solid transparent; transition: all .15s; }
+  .tab:hover { color: var(--text); }
+  .tab.active { color: var(--primary); border-bottom-color: var(--primary); }
+
+  /* Panel grid */
+  .panel-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+  .panel-grid.full { grid-template-columns: 1fr; }
+  .panel { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 18px; box-shadow: var(--shadow); }
+  .panel h3 { margin: 0 0 4px; font-size: 15px; font-weight: 600; }
+  .panel .desc { color: var(--muted); font-size: 12px; margin-bottom: 14px; }
+  .panel .chart-wrap { position: relative; height: 320px; }
+  .panel.tall .chart-wrap { height: 480px; }
+
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  /* Filter chips */
+  .filter-row { display: flex; gap: 8px; align-items: center; margin-bottom: 14px; flex-wrap: wrap; }
+  .filter-row .label { font-size: 12px; color: var(--muted); margin-right: 4px; }
+  .chip { background: #fff; border: 1px solid var(--border); padding: 5px 12px; border-radius: 999px; cursor: pointer; font-size: 12px; transition: all .15s; }
+  .chip:hover { border-color: var(--primary); }
+  .chip.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+
+  /* Heatmap table */
+  .heatmap { width: 100%; border-collapse: separate; border-spacing: 4px; }
+  .heatmap th { text-align: left; font-weight: 600; font-size: 12px; color: var(--muted); padding: 6px 8px; }
+  .heatmap td { background: #f1f5f9; border-radius: 6px; padding: 12px 10px; text-align: center; font-size: 13px; font-weight: 600; transition: transform .1s; cursor: default; }
+  .heatmap td:hover { transform: scale(1.04); }
+  .heatmap td.empty { background: transparent; color: var(--muted); font-weight: 400; }
+  .heatmap td .small { font-size: 10px; font-weight: 400; opacity: .8; display: block; margin-top: 2px; }
+
+  /* Insight callout */
+  .insights { background: #fffbeb; border: 1px solid #fde68a; border-radius: 12px; padding: 14px 16px; margin-top: 16px; }
+  .insights h4 { margin: 0 0 8px; font-size: 13px; color: #92400e; }
+  .insights ul { margin: 0; padding-left: 20px; font-size: 13px; color: #78350f; }
+  .insights ul li { margin-bottom: 4px; }
+
+  /* Footer */
+  .footer { color: var(--muted); font-size: 12px; text-align: center; margin-top: 32px; padding-top: 16px; border-top: 1px solid var(--border); }
+
+  @media (max-width: 900px) {
+    .kpis { grid-template-columns: repeat(2, 1fr); }
+    .panel-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <div class="header">
+    <div>
+      <h1 id="dashTitle">[Demo] CS 운영 현황 대시보드</h1>
+      <div class="meta">
+        Source: <a id="srcLink" href="#" target="_blank">Sample dataset (synthetic)</a>
+        · Last updated: <span id="lastUpdated">—</span>
+      </div>
+    </div>
+    <div class="periods">
+      <div class="pill"><strong>인입 기간</strong><span id="intakePeriod">—</span></div>
+      <div class="pill"><strong>NPS 기간</strong><span id="npsPeriod">—</span></div>
+    </div>
+  </div>
+
+  <div class="kpis">
+    <div class="kpi">
+      <div class="label">IB 총 인입</div>
+      <div class="value" id="kpiIB">—</div>
+      <div class="sub">전화·채팅·메일 합계</div>
+    </div>
+    <div class="kpi">
+      <div class="label">OB 총 인입</div>
+      <div class="value" id="kpiOB">—</div>
+      <div class="sub">전화 99.5%</div>
+    </div>
+    <div class="kpi">
+      <div class="label">상담사 NPS (전체)</div>
+      <div class="value" id="kpiNps">—</div>
+      <div class="sub">응답수 <span id="kpiNpsCount">—</span></div>
+    </div>
+    <div class="kpi" id="kpiBotCard">
+      <div class="label">챗봇 NPS · 최근일</div>
+      <div class="value" id="kpiBotNps">—</div>
+      <div class="sub" id="kpiBotSub">—</div>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" data-tab="intake">인입 현황</button>
+    <button class="tab" data-tab="chatbot">챗봇</button>
+    <button class="tab" data-tab="nps">상담사 NPS</button>
+    <button class="tab" data-tab="inquiry">문의유형</button>
+  </div>
+
+  <!-- Tab: 인입 현황 -->
+  <section class="tab-panel active" id="tab-intake">
+    <div class="filter-row">
+      <span class="label">IB/OB 필터:</span>
+      <button class="chip active" data-io="ALL">전체</button>
+      <button class="chip" data-io="IB">IB</button>
+      <button class="chip" data-io="OB">OB</button>
+    </div>
+    <div class="panel-grid">
+      <div class="panel tall">
+        <h3>일별 채널 추이</h3>
+        <div class="desc">스택드 바 · 채널 클릭으로 토글, IB/OB는 위 필터로 전환</div>
+        <div class="chart-wrap"><canvas id="chartChannelDaily"></canvas></div>
+      </div>
+      <div class="panel tall">
+        <h3>채널별 비중</h3>
+        <div class="desc">기간 합산 · IB와 OB 그룹 내 비율(%)</div>
+        <div class="chart-wrap"><canvas id="chartChannelMix"></canvas></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Tab: 챗봇 -->
+  <section class="tab-panel" id="tab-chatbot">
+    <div class="panel-grid">
+      <div class="panel">
+        <h3>챗봇 플로우 일별 (IB 한정)</h3>
+        <div class="desc">스택드 바 = 티켓수, 라인 = 채팅 대비 챗봇해결률(%)</div>
+        <div class="chart-wrap"><canvas id="chartBotResolution"></canvas></div>
+      </div>
+      <div class="panel">
+        <h3>챗봇 NPS 일별 추이</h3>
+        <div class="desc">스택드 바 = 추천/모름/비추천, 라인 = NPS(%)</div>
+        <div class="chart-wrap"><canvas id="chartBotNps"></canvas></div>
+      </div>
+    </div>
+    <div class="insights">
+      <h4>⚠️ 살펴볼 시그널</h4>
+      <ul>
+        <li>챗봇 분류 데이터가 <strong>2026-01-08부터 적재</strong> 시작 (이전 0건) — 코드 매핑 누락/배포 시점 확인 필요</li>
+        <li><strong>2026-01-10 챗봇 NPS 11.1%로 급락</strong> (이전 일자 평균 54%) · 응답 18건 · 시나리오 회고 권장</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- Tab: NPS -->
+  <section class="tab-panel" id="tab-nps">
+    <div class="panel-grid">
+      <div class="panel">
+        <h3>NPS 일별 추이</h3>
+        <div class="desc">티켓 생성일 기준 · 부서/채널 전체</div>
+        <div class="chart-wrap"><canvas id="chartNpsDaily"></canvas></div>
+      </div>
+      <div class="panel">
+        <h3>부서별 NPS</h3>
+        <div class="desc">상담사 NPS · 부서별 합계 + 전체 ROLLUP</div>
+        <div class="chart-wrap"><canvas id="chartDeptNps"></canvas></div>
+      </div>
+      <div class="panel" style="grid-column: 1 / -1;">
+        <h3>부서 × 채널 NPS 매트릭스</h3>
+        <div class="desc">셀 클릭 시 응답수/추천/비추천 상세 표시 (응답수 적은 셀은 흐리게)</div>
+        <div id="heatmapWrap" style="margin-top: 12px;"></div>
+        <div id="heatmapDetail" style="margin-top: 12px; font-size: 13px; color: var(--muted);">셀을 클릭해보세요.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Tab: 문의유형 -->
+  <section class="tab-panel" id="tab-inquiry">
+    <div class="panel-grid full">
+      <div class="panel tall">
+        <h3>IB 상위 문의유형 Top 20</h3>
+        <div class="desc">가로 막대 · 채널별 색상 구분 · 수치 클릭 시 상세</div>
+        <div class="chart-wrap" style="height: 600px;"><canvas id="chartTopInquiry"></canvas></div>
+      </div>
+    </div>
+  </section>
+
+  <div class="footer">
+    Synthetic demo dataset · 데이터 갱신은 data.json 교체 방식
+  </div>
+</div>
+
+<script>
+const palette = {
+  ib: '#2563eb', ob: '#f97316',
+  phone: '#2563eb', chat: '#8b5cf6', mail: '#94a3b8',
+  promote: '#10b981', neutral: '#94a3b8', detract: '#ef4444',
+  bot: '#06b6d4', botToAgent: '#f59e0b', agent: '#8b5cf6',
+};
+
+const channelColor = { '전화': palette.phone, '채팅': palette.chat, '메일': palette.mail };
+const deptColor = { 'Team A': '#2563eb', 'Team B': '#10b981', 'Team C': '#f59e0b', '전체': '#0f172a' };
+
+let DATA = null;
+let intakeIoFilter = 'ALL';
+const charts = {};
+
+// Boot
+fetch('./data.json')
+  .then(r => r.json())
+  .then(data => { DATA = data; renderAll(); })
+  .catch(err => {
+    document.querySelector('.container').insertAdjacentHTML('afterbegin',
+      `<div style="background:#fee2e2;border:1px solid #fca5a5;color:#991b1b;padding:14px;border-radius:8px;margin-bottom:16px;">
+       data.json 로드 실패: ${err.message}<br><small>로컬에서는 file:// 대신 간단 서버로 열어주세요. 예: <code>cd eca-cs-dashboard && python3 -m http.server 8080</code></small>
+       </div>`);
+  });
+
+function renderAll() {
+  // Header meta
+  document.getElementById('dashTitle').textContent = DATA.meta.title;
+  document.getElementById('srcLink').href = DATA.meta.sourceUrl;
+  document.getElementById('lastUpdated').textContent = DATA.meta.lastUpdated;
+  document.getElementById('intakePeriod').textContent = DATA.meta.intakePeriod;
+  document.getElementById('npsPeriod').textContent = DATA.meta.npsPeriod;
+
+  // KPIs
+  const ibTotal = DATA.channelMix.filter(d => d.io === 'IB').reduce((s, d) => s + d.tickets, 0);
+  const obTotal = DATA.channelMix.filter(d => d.io === 'OB').reduce((s, d) => s + d.tickets, 0);
+  document.getElementById('kpiIB').textContent = ibTotal.toLocaleString();
+  document.getElementById('kpiOB').textContent = obTotal.toLocaleString();
+  const total = DATA.deptNps.find(d => d.dept === '전체');
+  document.getElementById('kpiNps').textContent = total ? total.nps.toFixed(1) + '%' : '—';
+  document.getElementById('kpiNpsCount').textContent = total ? total.responses.toLocaleString() : '—';
+  const lastBot = DATA.chatbotNps[DATA.chatbotNps.length - 1];
+  document.getElementById('kpiBotNps').textContent = lastBot ? lastBot.nps.toFixed(1) + '%' : '—';
+  document.getElementById('kpiBotSub').textContent = lastBot ? `${lastBot.date} · 응답 ${lastBot.responses}` : '—';
+  if (lastBot && lastBot.nps < 30) document.getElementById('kpiBotCard').classList.add('alert');
+
+  // Tabs
+  document.querySelectorAll('.tab').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+      // Chart.js needs resize after display:none -> block
+      Object.values(charts).forEach(c => c && c.resize());
+    });
+  });
+
+  // IO filter chips
+  document.querySelectorAll('.chip[data-io]').forEach(chip => {
+    chip.addEventListener('click', () => {
+      document.querySelectorAll('.chip[data-io]').forEach(c => c.classList.remove('active'));
+      chip.classList.add('active');
+      intakeIoFilter = chip.dataset.io;
+      renderChannelDaily();
+    });
+  });
+
+  // Charts
+  renderChannelDaily();
+  renderChannelMix();
+  renderBotResolution();
+  renderBotNps();
+  renderNpsDaily();
+  renderDeptNps();
+  renderHeatmap();
+  renderTopInquiry();
+}
+
+function uniqDates(rows) { return [...new Set(rows.map(r => r.date))].sort(); }
+
+// 1. 일별 채널 추이
+function renderChannelDaily() {
+  const rows = DATA.channelDaily.filter(r => intakeIoFilter === 'ALL' || r.io === intakeIoFilter);
+  const dates = uniqDates(rows);
+  const channels = ['전화', '채팅', '메일'];
+  const datasets = [];
+
+  if (intakeIoFilter === 'ALL') {
+    // IB/OB × channel as separate stacks
+    ['IB', 'OB'].forEach(io => {
+      channels.forEach(ch => {
+        const data = dates.map(d => {
+          const r = rows.find(x => x.date === d && x.io === io && x.channel === ch);
+          return r ? r.tickets : 0;
+        });
+        if (data.some(v => v > 0)) {
+          datasets.push({
+            label: `${io} ${ch}`,
+            data,
+            backgroundColor: io === 'IB' ? channelColor[ch] : shade(channelColor[ch], -10),
+            stack: io,
+            borderRadius: 2,
+          });
+        }
+      });
+    });
+  } else {
+    channels.forEach(ch => {
+      const data = dates.map(d => {
+        const r = rows.find(x => x.date === d && x.channel === ch);
+        return r ? r.tickets : 0;
+      });
+      if (data.some(v => v > 0)) {
+        datasets.push({
+          label: ch, data,
+          backgroundColor: channelColor[ch],
+          stack: 'a',
+          borderRadius: 2,
+        });
+      }
+    });
+  }
+
+  if (charts.channelDaily) charts.channelDaily.destroy();
+  charts.channelDaily = new Chart(document.getElementById('chartChannelDaily'), {
+    type: 'bar',
+    data: { labels: dates, datasets },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      scales: {
+        x: { stacked: true, grid: { display: false } },
+        y: { stacked: true, beginAtZero: true, ticks: { callback: v => v.toLocaleString() } }
+      },
+      plugins: {
+        legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } },
+        tooltip: { callbacks: { label: ctx => `${ctx.dataset.label}: ${ctx.parsed.y.toLocaleString()}건` } }
+      }
+    }
+  });
+}
+
+// 2. 채널별 비중 (도넛 2개를 하나의 차트로 - 안쪽 IB, 바깥 OB)
+function renderChannelMix() {
+  const ib = DATA.channelMix.filter(d => d.io === 'IB');
+  const ob = DATA.channelMix.filter(d => d.io === 'OB');
+  const labels = [
+    ...ib.map(d => `IB ${d.channel}`),
+    ...ob.map(d => `OB ${d.channel}`),
+  ];
+  const data = [...ib.map(d => d.tickets), ...ob.map(d => d.tickets)];
+  const bg = [
+    ...ib.map(d => channelColor[d.channel]),
+    ...ob.map(d => shade(channelColor[d.channel], -20)),
+  ];
+
+  if (charts.channelMix) charts.channelMix.destroy();
+  charts.channelMix = new Chart(document.getElementById('chartChannelMix'), {
+    type: 'doughnut',
+    data: { labels, datasets: [{ data, backgroundColor: bg, borderWidth: 2, borderColor: '#fff' }] },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'right', labels: { boxWidth: 12, font: { size: 11 } } },
+        tooltip: {
+          callbacks: {
+            label: ctx => {
+              const row = [...ib, ...ob][ctx.dataIndex];
+              return `${ctx.label}: ${ctx.parsed.toLocaleString()}건 (${row.ratio}%)`;
+            }
+          }
+        }
+      }
+    }
+  });
+}
+
+// 3. 챗봇 해결율 추이
+function renderBotResolution() {
+  const rows = DATA.chatbotResolution;
+  const labels = rows.map(r => r.date);
+
+  if (charts.botResolution) charts.botResolution.destroy();
+  charts.botResolution = new Chart(document.getElementById('chartBotResolution'), {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [
+        { type: 'bar', label: '챗봇 해결', data: rows.map(r => r.botSolved), backgroundColor: palette.bot, stack: 'a', yAxisID: 'y' },
+        { type: 'bar', label: '챗봇>상담사', data: rows.map(r => r.botToAgent), backgroundColor: palette.botToAgent, stack: 'a', yAxisID: 'y' },
+        { type: 'bar', label: '상담사 직접', data: rows.map(r => r.agentDirect), backgroundColor: palette.agent, stack: 'a', yAxisID: 'y' },
+        { type: 'line', label: '채팅대비 챗봇해결률(%)', data: rows.map(r => r.chatSolveRate), borderColor: palette.detract, backgroundColor: palette.detract, yAxisID: 'y1', tension: 0.3, pointRadius: 4 },
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      scales: {
+        x: { stacked: true, grid: { display: false } },
+        y: { stacked: true, beginAtZero: true, position: 'left', title: { display: true, text: '티켓수' } },
+        y1: { beginAtZero: true, position: 'right', grid: { display: false }, title: { display: true, text: '해결률(%)' }, ticks: { callback: v => v + '%' } },
+      },
+      plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } } }
+    }
+  });
+}
+
+// 4. 챗봇 NPS 일별
+function renderBotNps() {
+  const rows = DATA.chatbotNps;
+  if (charts.botNps) charts.botNps.destroy();
+  charts.botNps = new Chart(document.getElementById('chartBotNps'), {
+    type: 'bar',
+    data: {
+      labels: rows.map(r => r.date),
+      datasets: [
+        { type: 'bar', label: '추천', data: rows.map(r => r.promote), backgroundColor: palette.promote, stack: 'a', yAxisID: 'y' },
+        { type: 'bar', label: '모름', data: rows.map(r => r.neutral), backgroundColor: palette.neutral, stack: 'a', yAxisID: 'y' },
+        { type: 'bar', label: '비추천', data: rows.map(r => r.detract), backgroundColor: palette.detract, stack: 'a', yAxisID: 'y' },
+        { type: 'line', label: 'NPS(%)', data: rows.map(r => r.nps), borderColor: '#0f172a', backgroundColor: '#0f172a', yAxisID: 'y1', tension: 0.3, pointRadius: 5 },
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      scales: {
+        x: { stacked: true, grid: { display: false } },
+        y: { stacked: true, beginAtZero: true, title: { display: true, text: '응답수' } },
+        y1: { beginAtZero: true, max: 100, position: 'right', grid: { display: false }, title: { display: true, text: 'NPS(%)' }, ticks: { callback: v => v + '%' } },
+      },
+      plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } } }
+    }
+  });
+}
+
+// 5. NPS 일별 추이
+function renderNpsDaily() {
+  const rows = DATA.npsDaily;
+  if (charts.npsDaily) charts.npsDaily.destroy();
+  charts.npsDaily = new Chart(document.getElementById('chartNpsDaily'), {
+    type: 'bar',
+    data: {
+      labels: rows.map(r => r.date),
+      datasets: [
+        { type: 'bar', label: '추천', data: rows.map(r => r.promote), backgroundColor: palette.promote, stack: 'a', yAxisID: 'y' },
+        { type: 'bar', label: '모름', data: rows.map(r => r.neutral), backgroundColor: palette.neutral, stack: 'a', yAxisID: 'y' },
+        { type: 'bar', label: '비추천', data: rows.map(r => r.detract), backgroundColor: palette.detract, stack: 'a', yAxisID: 'y' },
+        { type: 'line', label: 'NPS(%)', data: rows.map(r => r.nps), borderColor: '#0f172a', backgroundColor: '#0f172a', yAxisID: 'y1', tension: 0.3, pointRadius: 5 },
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      scales: {
+        x: { stacked: true, grid: { display: false } },
+        y: { stacked: true, beginAtZero: true, title: { display: true, text: '응답수' } },
+        y1: { beginAtZero: true, max: 100, position: 'right', grid: { display: false }, ticks: { callback: v => v + '%' } },
+      },
+      plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } } }
+    }
+  });
+}
+
+// 6. 부서별 NPS
+function renderDeptNps() {
+  const rows = [...DATA.deptNps].sort((a, b) => b.responses - a.responses);
+  if (charts.deptNps) charts.deptNps.destroy();
+  charts.deptNps = new Chart(document.getElementById('chartDeptNps'), {
+    type: 'bar',
+    data: {
+      labels: rows.map(r => `${r.dept} (n=${r.responses})`),
+      datasets: [{
+        label: 'NPS(%)',
+        data: rows.map(r => r.nps),
+        backgroundColor: rows.map(r => deptColor[r.dept] || '#64748b'),
+        borderRadius: 6,
+      }]
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true, maintainAspectRatio: false,
+      scales: {
+        x: { beginAtZero: true, max: 100, ticks: { callback: v => v + '%' } },
+        y: { grid: { display: false } }
+      },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: ctx => {
+              const r = rows[ctx.dataIndex];
+              return [`NPS: ${r.nps}%`, `추천 ${r.promote} · 모름 ${r.neutral} · 비추천 ${r.detract}`];
+            }
+          }
+        }
+      }
+    }
+  });
+}
+
+// 7. 부서×채널 히트맵 (HTML 테이블)
+function renderHeatmap() {
+  const depts = ['Team A', 'Team B', 'Team C'];
+  const channels = ['전화', '채팅', '메일'];
+  let html = `<table class="heatmap"><thead><tr><th></th>`;
+  channels.forEach(ch => html += `<th>${ch}</th>`);
+  html += `</tr></thead><tbody>`;
+  depts.forEach(d => {
+    html += `<tr><th>${d}</th>`;
+    channels.forEach(ch => {
+      const cell = DATA.deptChannelNps.find(x => x.dept === d && x.channel === ch);
+      if (!cell) {
+        html += `<td class="empty">—</td>`;
+      } else {
+        const bg = npsColor(cell.nps);
+        const opacity = cell.responses < 5 ? 0.4 : 1;
+        html += `<td style="background:${bg};color:#fff;opacity:${opacity};cursor:pointer" data-dept="${d}" data-ch="${ch}">
+                  ${cell.nps}%<span class="small">n=${cell.responses}</span>
+                </td>`;
+      }
+    });
+    html += `</tr>`;
+  });
+  html += `</tbody></table>`;
+  document.getElementById('heatmapWrap').innerHTML = html;
+
+  document.querySelectorAll('.heatmap td[data-dept]').forEach(td => {
+    td.addEventListener('click', () => {
+      const cell = DATA.deptChannelNps.find(x => x.dept === td.dataset.dept && x.channel === td.dataset.ch);
+      if (cell) {
+        document.getElementById('heatmapDetail').innerHTML =
+          `<strong>${cell.dept} · ${cell.channel}</strong> — NPS ${cell.nps}% · 응답 ${cell.responses}건 · 추천 ${cell.promote} / 모름 ${cell.neutral} / 비추천 ${cell.detract}`;
+      }
+    });
+  });
+}
+
+// 8. Top 20 문의유형
+function renderTopInquiry() {
+  const rows = DATA.topInquiryTypes;
+  if (charts.topInquiry) charts.topInquiry.destroy();
+  charts.topInquiry = new Chart(document.getElementById('chartTopInquiry'), {
+    type: 'bar',
+    data: {
+      labels: rows.map(r => `${r.channel} · ${r.type}`),
+      datasets: [{
+        label: '티켓수',
+        data: rows.map(r => r.tickets),
+        backgroundColor: rows.map(r => channelColor[r.channel] || '#64748b'),
+        borderRadius: 4,
+      }]
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true, maintainAspectRatio: false,
+      scales: {
+        x: { beginAtZero: true, ticks: { callback: v => v.toLocaleString() } },
+        y: { grid: { display: false }, ticks: { font: { size: 11 } } }
+      },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: ctx => {
+              const r = rows[ctx.dataIndex];
+              return [`${r.tickets.toLocaleString()}건`, `전체대비 ${r.ratio}%`];
+            }
+          }
+        }
+      }
+    }
+  });
+}
+
+// Helpers
+function npsColor(nps) {
+  if (nps >= 80) return '#10b981';
+  if (nps >= 60) return '#22c55e';
+  if (nps >= 40) return '#eab308';
+  if (nps >= 20) return '#f97316';
+  return '#ef4444';
+}
+function shade(hex, percent) {
+  const num = parseInt(hex.replace('#', ''), 16);
+  const amt = Math.round(2.55 * percent);
+  const R = Math.max(0, Math.min(255, (num >> 16) + amt));
+  const G = Math.max(0, Math.min(255, ((num >> 8) & 0x00FF) + amt));
+  const B = Math.max(0, Math.min(255, (num & 0x0000FF) + amt));
+  return '#' + ((R << 16) | (G << 8) | B).toString(16).padStart(6, '0');
+}
+</script>
+</body>
+</html>
