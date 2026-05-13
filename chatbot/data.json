@@ -1,0 +1,76 @@
+{
+  "meta": {
+    "title": "[오집사] 챗봇 운영 현황 대시보드",
+    "source": "AI 챗봇 운영 현황 모니터링 시트",
+    "sourceUrl": "https://docs.google.com/spreadsheets/d/1exPoh0mVY4Z8yb5WBVstvGXSAwupS-rYkR_L2PQu0Gc/edit",
+    "lastUpdated": "2026-05-14",
+    "periodDaily": "2026-03-24 ~ 2026-05-12",
+    "phaseNote": "PoC (Lv.1~2) → Phase 1 (Lv.1~3) 전환: 2026-05-09"
+  },
+  "daily": [
+    { "date": "2026-03-24", "weekday": "화", "phase": "PoC", "total": 2327, "call": 1606, "chat": 721, "botSolved": 143, "botToAgent": 316, "agentDirect": 260, "botInflowRate": 19.72, "botSolveRate": 6.15, "chatBotSolveRate": 19.83, "npsBot": 40.0, "npsBotPromote": 12, "npsBotNeutral": 4, "npsBotDetract": 4, "npsAgent": 83.9 },
+    { "date": "2026-03-25", "weekday": "수", "phase": "PoC", "total": 2284, "call": 1690, "chat": 594, "botSolved": 96, "botToAgent": 256, "agentDirect": 180, "botInflowRate": 15.41, "botSolveRate": 4.20, "chatBotSolveRate": 16.16, "npsBot": 38.5, "npsBotPromote": 16, "npsBotNeutral": 4, "npsBotDetract": 6, "npsAgent": 69.8 },
+    { "date": "2026-03-26", "weekday": "목", "phase": "PoC", "total": 2017, "call": 1459, "chat": 558, "botSolved": 84, "botToAgent": 216, "agentDirect": 201, "botInflowRate": 14.87, "botSolveRate": 4.16, "chatBotSolveRate": 15.05, "npsBot": 53.3, "npsBotPromote": 10, "npsBotNeutral": 3, "npsBotDetract": 2, "npsAgent": 76.2 },
+    { "date": "2026-03-27", "weekday": "금", "phase": "PoC", "total": 2033, "call": 1488, "chat": 545, "botSolved": 81, "botToAgent": 224, "agentDirect": 174, "botInflowRate": 15.00, "botSolveRate": 3.98, "chatBotSolveRate": 14.86, "npsBot": 80.0, "npsBotPromote": 16, "npsBotNeutral": 4, "npsBotDetract": 0, "npsAgent": 82.4 },
+    { "date": "2026-03-30", "weekday": "월", "phase": "PoC", "total": 3061, "call": 2035, "chat": 1026, "botSolved": 165, "botToAgent": 349, "agentDirect": 361, "botInflowRate": 16.79, "botSolveRate": 5.39, "chatBotSolveRate": 16.08, "npsBot": 51.9, "npsBotPromote": 20, "npsBotNeutral": 1, "npsBotDetract": 6, "npsAgent": 75.4 },
+    { "date": "2026-03-31", "weekday": "화", "phase": "PoC", "total": 2266, "call": 1591, "chat": 675, "botSolved": 114, "botToAgent": 249, "agentDirect": 232, "botInflowRate": 16.02, "botSolveRate": 5.03, "chatBotSolveRate": 16.89, "npsBot": 39.1, "npsBotPromote": 13, "npsBotNeutral": 6, "npsBotDetract": 4, "npsAgent": 84.5 },
+    { "date": "2026-04-01", "weekday": "수", "phase": "PoC", "total": 2417, "call": 1593, "chat": 824, "botSolved": 105, "botToAgent": 233, "agentDirect": 390, "botInflowRate": 13.98, "botSolveRate": 4.34, "chatBotSolveRate": 12.74, "npsBot": 59.3, "npsBotPromote": 18, "npsBotNeutral": 7, "npsBotDetract": 2, "npsAgent": 74.6 },
+    { "date": "2026-04-02", "weekday": "목", "phase": "PoC", "total": 2013, "call": 1460, "chat": 553, "botSolved": 96, "botToAgent": 213, "agentDirect": 177, "botInflowRate": 15.35, "botSolveRate": 4.77, "chatBotSolveRate": 17.36, "npsBot": 63.6, "npsBotPromote": 8, "npsBotNeutral": 2, "npsBotDetract": 1, "npsAgent": 73.8 },
+    { "date": "2026-04-03", "weekday": "금", "phase": "PoC", "total": 1826, "call": 1330, "chat": 496, "botSolved": 87, "botToAgent": 172, "agentDirect": 178, "botInflowRate": 14.18, "botSolveRate": 4.76, "chatBotSolveRate": 17.54, "npsBot": 44.4, "npsBotPromote": 12, "npsBotNeutral": 2, "npsBotDetract": 4, "npsAgent": 76.3 },
+    { "date": "2026-04-06", "weekday": "월", "phase": "PoC", "total": 2717, "call": 1901, "chat": 816, "botSolved": 138, "botToAgent": 274, "agentDirect": 319, "botInflowRate": 15.16, "botSolveRate": 5.08, "chatBotSolveRate": 16.91, "npsBot": 66.7, "npsBotPromote": 14, "npsBotNeutral": 2, "npsBotDetract": 2, "npsAgent": 80.1 },
+    { "date": "2026-04-07", "weekday": "화", "phase": "PoC", "total": 2143, "call": 1495, "chat": 648, "botSolved": 110, "botToAgent": 263, "agentDirect": 275, "botInflowRate": 17.41, "botSolveRate": 5.13, "chatBotSolveRate": 16.98, "npsBot": 48.6, "npsBotPromote": 25, "npsBotNeutral": 5, "npsBotDetract": 7, "npsAgent": 79.9 },
+    { "date": "2026-04-08", "weekday": "수", "phase": "PoC", "total": 2119, "call": 1482, "chat": 637, "botSolved": 114, "botToAgent": 279, "agentDirect": 244, "botInflowRate": 18.55, "botSolveRate": 5.38, "chatBotSolveRate": 17.90, "npsBot": 74.1, "npsBotPromote": 22, "npsBotNeutral": 3, "npsBotDetract": 2, "npsAgent": 79.0 },
+    { "date": "2026-04-09", "weekday": "목", "phase": "PoC", "total": 1961, "call": 1362, "chat": 599, "botSolved": 109, "botToAgent": 257, "agentDirect": 233, "botInflowRate": 18.66, "botSolveRate": 5.56, "chatBotSolveRate": 18.20, "npsBot": 59.1, "npsBotPromote": 16, "npsBotNeutral": 3, "npsBotDetract": 3, "npsAgent": 83.5 },
+    { "date": "2026-04-10", "weekday": "금", "phase": "PoC", "total": 1833, "call": 1341, "chat": 492, "botSolved": 77, "botToAgent": 224, "agentDirect": 191, "botInflowRate": 16.42, "botSolveRate": 4.20, "chatBotSolveRate": 15.65, "npsBot": 13.6, "npsBotPromote": 9, "npsBotNeutral": 7, "npsBotDetract": 6, "npsAgent": 70.3 },
+    { "date": "2026-04-13", "weekday": "월", "phase": "PoC", "total": 2616, "call": 1841, "chat": 775, "botSolved": 122, "botToAgent": 373, "agentDirect": 278, "botInflowRate": 18.92, "botSolveRate": 4.66, "chatBotSolveRate": 15.74, "npsBot": 23.8, "npsBotPromote": 11, "npsBotNeutral": 4, "npsBotDetract": 6, "npsAgent": 74.0 },
+    { "date": "2026-04-14", "weekday": "화", "phase": "PoC", "total": 2151, "call": 1525, "chat": 626, "botSolved": 116, "botToAgent": 297, "agentDirect": 213, "botInflowRate": 19.20, "botSolveRate": 5.39, "chatBotSolveRate": 18.53, "npsBot": 45.0, "npsBotPromote": 13, "npsBotNeutral": 3, "npsBotDetract": 4, "npsAgent": 75.0 },
+    { "date": "2026-04-15", "weekday": "수", "phase": "PoC", "total": 2286, "call": 1585, "chat": 701, "botSolved": 126, "botToAgent": 301, "agentDirect": 274, "botInflowRate": 18.68, "botSolveRate": 5.51, "chatBotSolveRate": 17.97, "npsBot": 41.4, "npsBotPromote": 18, "npsBotNeutral": 5, "npsBotDetract": 6, "npsAgent": 74.7 },
+    { "date": "2026-04-16", "weekday": "목", "phase": "PoC", "total": 2085, "call": 1499, "chat": 586, "botSolved": 85, "botToAgent": 248, "agentDirect": 253, "botInflowRate": 15.97, "botSolveRate": 4.08, "chatBotSolveRate": 14.51, "npsBot": 52.4, "npsBotPromote": 14, "npsBotNeutral": 4, "npsBotDetract": 3, "npsAgent": 85.2 },
+    { "date": "2026-04-17", "weekday": "금", "phase": "PoC", "total": 1924, "call": 1366, "chat": 558, "botSolved": 96, "botToAgent": 238, "agentDirect": 224, "botInflowRate": 17.36, "botSolveRate": 4.99, "chatBotSolveRate": 17.20, "npsBot": 30.0, "npsBotPromote": 6, "npsBotNeutral": 1, "npsBotDetract": 3, "npsAgent": 78.5 },
+    { "date": "2026-04-20", "weekday": "월", "phase": "PoC", "total": 2636, "call": 1855, "chat": 781, "botSolved": 140, "botToAgent": 345, "agentDirect": 296, "botInflowRate": 18.40, "botSolveRate": 5.31, "chatBotSolveRate": 17.93, "npsBot": 93.3, "npsBotPromote": 14, "npsBotNeutral": 1, "npsBotDetract": 0, "npsAgent": 85.2 },
+    { "date": "2026-04-21", "weekday": "화", "phase": "PoC", "total": 2252, "call": 1605, "chat": 647, "botSolved": 84, "botToAgent": 302, "agentDirect": 261, "botInflowRate": 17.14, "botSolveRate": 3.73, "chatBotSolveRate": 12.98, "npsBot": 44.4, "npsBotPromote": 17, "npsBotNeutral": 5, "npsBotDetract": 5, "npsAgent": 74.2 },
+    { "date": "2026-04-22", "weekday": "수", "phase": "PoC", "total": 2107, "call": 1489, "chat": 618, "botSolved": 88, "botToAgent": 299, "agentDirect": 231, "botInflowRate": 18.37, "botSolveRate": 4.18, "chatBotSolveRate": 14.24, "npsBot": 66.7, "npsBotPromote": 9, "npsBotNeutral": 2, "npsBotDetract": 1, "npsAgent": 70.8 },
+    { "date": "2026-04-23", "weekday": "목", "phase": "PoC", "total": 1961, "call": 1409, "chat": 552, "botSolved": 84, "botToAgent": 268, "agentDirect": 199, "botInflowRate": 17.95, "botSolveRate": 4.28, "chatBotSolveRate": 15.22, "npsBot": 29.2, "npsBotPromote": 13, "npsBotNeutral": 5, "npsBotDetract": 6, "npsAgent": 68.8 },
+    { "date": "2026-04-24", "weekday": "금", "phase": "PoC", "total": 1850, "call": 1380, "chat": 470, "botSolved": 75, "botToAgent": 209, "agentDirect": 186, "botInflowRate": 15.35, "botSolveRate": 4.05, "chatBotSolveRate": 15.96, "npsBot": 78.6, "npsBotPromote": 11, "npsBotNeutral": 3, "npsBotDetract": 0, "npsAgent": 84.1 },
+    { "date": "2026-04-27", "weekday": "월", "phase": "PoC", "total": 2473, "call": 1722, "chat": 751, "botSolved": 128, "botToAgent": 331, "agentDirect": 292, "botInflowRate": 18.56, "botSolveRate": 5.18, "chatBotSolveRate": 17.04, "npsBot": 54.5, "npsBotPromote": 8, "npsBotNeutral": 1, "npsBotDetract": 2, "npsAgent": 81.7 },
+    { "date": "2026-04-28", "weekday": "화", "phase": "PoC", "total": 2089, "call": 1470, "chat": 619, "botSolved": 113, "botToAgent": 266, "agentDirect": 240, "botInflowRate": 18.14, "botSolveRate": 5.41, "chatBotSolveRate": 18.26, "npsBot": 40.0, "npsBotPromote": 3, "npsBotNeutral": 1, "npsBotDetract": 1, "npsAgent": 83.9 },
+    { "date": "2026-04-29", "weekday": "수", "phase": "PoC", "total": 2287, "call": 1476, "chat": 811, "botSolved": 90, "botToAgent": 287, "agentDirect": 432, "botInflowRate": 16.48, "botSolveRate": 3.94, "chatBotSolveRate": 11.10, "npsBot": 86.7, "npsBotPromote": 14, "npsBotNeutral": 0, "npsBotDetract": 1, "npsAgent": 80.6 },
+    { "date": "2026-04-30", "weekday": "목", "phase": "PoC", "total": 1828, "call": 1296, "chat": 532, "botSolved": 58, "botToAgent": 225, "agentDirect": 248, "botInflowRate": 15.48, "botSolveRate": 3.17, "chatBotSolveRate": 10.90, "npsBot": 55.0, "npsBotPromote": 13, "npsBotNeutral": 5, "npsBotDetract": 2, "npsAgent": 76.7 },
+    { "date": "2026-05-04", "weekday": "월", "phase": "PoC", "total": 2544, "call": 1795, "chat": 749, "botSolved": 99, "botToAgent": 366, "agentDirect": 284, "botInflowRate": 18.28, "botSolveRate": 3.89, "chatBotSolveRate": 13.22, "npsBot": 30.8, "npsBotPromote": 7, "npsBotNeutral": 3, "npsBotDetract": 3, "npsAgent": 61.5 },
+    { "date": "2026-05-06", "weekday": "수", "phase": "PoC", "total": 2572, "call": 1777, "chat": 795, "botSolved": 105, "botToAgent": 336, "agentDirect": 352, "botInflowRate": 17.15, "botSolveRate": 4.08, "chatBotSolveRate": 13.21, "npsBot": 34.8, "npsBotPromote": 14, "npsBotNeutral": 3, "npsBotDetract": 6, "npsAgent": 76.9 },
+    { "date": "2026-05-07", "weekday": "목", "phase": "PoC", "total": 2055, "call": 1489, "chat": 566, "botSolved": 89, "botToAgent": 246, "agentDirect": 231, "botInflowRate": 16.30, "botSolveRate": 4.33, "chatBotSolveRate": 15.72, "npsBot": 70.0, "npsBotPromote": 7, "npsBotNeutral": 3, "npsBotDetract": 0, "npsAgent": 76.2 },
+    { "date": "2026-05-08", "weekday": "금", "phase": "PoC", "total": 2026, "call": 1480, "chat": 546, "botSolved": 110, "botToAgent": 221, "agentDirect": 213, "botInflowRate": 16.34, "botSolveRate": 5.43, "chatBotSolveRate": 20.15, "npsBot": 50.0, "npsBotPromote": 5, "npsBotNeutral": 2, "npsBotDetract": 1, "npsAgent": 77.8 },
+    { "date": "2026-05-11", "weekday": "월", "phase": "Phase1", "total": 2668, "call": 1881, "chat": 787, "botSolved": 183, "botToAgent": 480, "agentDirect": 124, "botInflowRate": 24.85, "botSolveRate": 6.86, "chatBotSolveRate": 23.25, "npsBot": 16.7, "npsBotPromote": 10, "npsBotNeutral": 1, "npsBotDetract": 7, "npsAgent": 83.7 },
+    { "date": "2026-05-12", "weekday": "화", "phase": "Phase1", "total": 2214, "call": 1569, "chat": 645, "botSolved": 179, "botToAgent": 383, "agentDirect": 83, "botInflowRate": 25.38, "botSolveRate": 8.08, "chatBotSolveRate": 27.75, "npsBot": 66.7, "npsBotPromote": 8, "npsBotNeutral": 4, "npsBotDetract": 0, "npsAgent": 82.2 }
+  ],
+  "monthly": [
+    { "label": "3월", "total": 13988, "call": 9869, "chat": 4119, "botSolved": 683, "botToAgent": 1610, "agentDirect": 1408, "botInflowRate": 16.39, "botSolveRate": 4.88, "chatBotSolveRate": 16.58, "npsBot": 49.6, "npsAgent": 77.9 },
+    { "label": "4월", "total": 47574, "call": 33482, "chat": 14092, "botSolved": 2241, "botToAgent": 5904, "agentDirect": 5634, "botInflowRate": 17.12, "botSolveRate": 4.71, "chatBotSolveRate": 15.90, "npsBot": 50.7, "npsAgent": 77.2 }
+  ],
+  "weekly": [
+    { "label": "13W", "range": "3/23~3/29", "total": 8661, "call": 6243, "chat": 2418, "botSolved": 404, "botToAgent": 1012, "agentDirect": 815, "botInflowRate": 16.35, "botSolveRate": 4.66, "chatBotSolveRate": 16.71, "npsBot": 51.9, "npsAgent": 76.8 },
+    { "label": "14W", "range": "3/30~4/5", "total": 11583, "call": 8009, "chat": 3574, "botSolved": 567, "botToAgent": 1216, "agentDirect": 1338, "botInflowRate": 15.39, "botSolveRate": 4.90, "chatBotSolveRate": 15.86, "npsBot": 50.5, "npsAgent": 76.9 },
+    { "label": "15W", "range": "4/6~4/12", "total": 10773, "call": 7581, "chat": 3192, "botSolved": 548, "botToAgent": 1297, "agentDirect": 1262, "botInflowRate": 17.13, "botSolveRate": 5.09, "chatBotSolveRate": 17.17, "npsBot": 48.9, "npsAgent": 77.7 },
+    { "label": "16W", "range": "4/13~4/19", "total": 11062, "call": 7816, "chat": 3246, "botSolved": 545, "botToAgent": 1457, "agentDirect": 1242, "botInflowRate": 18.10, "botSolveRate": 4.93, "chatBotSolveRate": 16.79, "npsBot": 39.8, "npsAgent": 77.1 },
+    { "label": "17W", "range": "4/20~4/26", "total": 10806, "call": 7738, "chat": 3068, "botSolved": 471, "botToAgent": 1423, "agentDirect": 1173, "botInflowRate": 17.53, "botSolveRate": 4.36, "chatBotSolveRate": 15.35, "npsBot": 56.5, "npsAgent": 75.8 },
+    { "label": "18W", "range": "4/27~5/3", "total": 8677, "call": 5964, "chat": 2713, "botSolved": 389, "botToAgent": 1109, "agentDirect": 1212, "botInflowRate": 17.26, "botSolveRate": 4.48, "chatBotSolveRate": 14.34, "npsBot": 59.3, "npsAgent": 79.5 },
+    { "label": "19W", "range": "5/4~5/8", "total": 9197, "call": 6541, "chat": 2656, "botSolved": 403, "botToAgent": 1169, "agentDirect": 1080, "botInflowRate": 17.09, "botSolveRate": 4.38, "chatBotSolveRate": 15.17, "npsBot": 43.6, "npsAgent": 73.6 }
+  ],
+  "npsReasonsBot": [
+    { "reason": "질문 이해", "marCount": 4, "aprCount": 21 },
+    { "reason": "답변 정확성", "marCount": 3, "aprCount": 22 },
+    { "reason": "메뉴/버튼 찾기", "marCount": 5, "aprCount": 19 },
+    { "reason": "답변 속도", "marCount": 2, "aprCount": 14 }
+  ],
+  "todayHourly": {
+    "date": "2026-05-14",
+    "slots": [
+      { "slot": "11:30", "total": 0, "call": 0, "chat": 0, "botSolved": 0, "botToAgent": 0, "agentDirect": 0 },
+      { "slot": "13:30", "total": 814, "call": 814, "chat": 0, "botSolved": 0, "botToAgent": 0, "agentDirect": 0 },
+      { "slot": "15:30", "total": 1091, "call": 1091, "chat": 0, "botSolved": 0, "botToAgent": 0, "agentDirect": 0 },
+      { "slot": "17:30", "total": 1466, "call": 1466, "chat": 0, "botSolved": 0, "botToAgent": 0, "agentDirect": 0 },
+      { "slot": "마감", "total": 1545, "call": 1545, "chat": 0, "botSolved": 0, "botToAgent": 0, "agentDirect": 0 }
+    ],
+    "note": "채팅 인입 데이터는 모니터링 적재 시점에 따라 0으로 표시될 수 있음 — 시트의 raw 데이터 갱신 여부 확인 필요"
+  }
+}

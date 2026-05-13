@@ -1,0 +1,788 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>[오집사] 챗봇 운영 현황 대시보드</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+  :root {
+    /* Ohouse tone palette */
+    --bg: #F4F4F5;
+    --panel: #FFFFFF;
+    --text: #1B1D1F;
+    --text-soft: #35383D;
+    --muted: #6B6F76;
+    --border: #E1E2E4;
+    --border-soft: #EDEDF0;
+
+    --primary: #35C5F0;        /* Ohouse cyan */
+    --primary-soft: #E6F7FD;
+    --accent: #FF7A00;         /* Ohouse orange (Phase 1 강조) */
+    --bot: #35C5F0;
+    --botToAgent: #FFB02E;
+    --agent: #6B6F76;
+    --promote: #45B26B;
+    --neutral: #B4B7BA;
+    --detract: #F03659;
+
+    --radius: 12px;
+    --radius-sm: 8px;
+    --shadow: 0 1px 2px rgba(27, 29, 31, 0.04), 0 1px 3px rgba(27, 29, 31, 0.06);
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Pretendard", "Apple SD Gothic Neo",
+                 "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    font-size: 14px;
+    line-height: 1.55;
+    letter-spacing: -0.01em;
+  }
+  .container { max-width: 1400px; margin: 0 auto; padding: 28px 24px 48px; }
+
+  /* Header */
+  .header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 28px; flex-wrap: wrap; gap: 16px; }
+  .header .brand { display: flex; align-items: center; gap: 12px; margin-bottom: 6px; }
+  .header .logo {
+    width: 32px; height: 32px; border-radius: 8px;
+    background: linear-gradient(135deg, var(--primary) 0%, #1FAAD8 100%);
+    display: inline-flex; align-items: center; justify-content: center;
+    color: #fff; font-weight: 800; font-size: 14px; letter-spacing: -0.02em;
+  }
+  .header h1 { margin: 0; font-size: 22px; font-weight: 700; }
+  .header .meta { color: var(--muted); font-size: 13px; }
+  .header .meta a { color: var(--primary); text-decoration: none; font-weight: 500; }
+  .header .meta a:hover { text-decoration: underline; }
+  .header .periods { display: flex; gap: 8px; font-size: 12px; flex-wrap: wrap; }
+  .pill { background: var(--panel); border: 1px solid var(--border); border-radius: 999px; padding: 6px 14px; box-shadow: var(--shadow); }
+  .pill strong { color: var(--text); margin-right: 6px; font-weight: 600; }
+  .badge-phase { display: inline-flex; align-items: center; gap: 4px; background: var(--accent); color: #fff; padding: 3px 10px; border-radius: 999px; font-size: 11px; font-weight: 600; }
+
+  /* KPI Cards */
+  .kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
+  .kpi { background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow); position: relative; overflow: hidden; }
+  .kpi::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--primary); border-top-left-radius: var(--radius); border-bottom-left-radius: var(--radius); }
+  .kpi.kpi-bot::before { background: var(--bot); }
+  .kpi.kpi-solve::before { background: var(--accent); }
+  .kpi.kpi-nps-bot::before { background: var(--promote); }
+  .kpi.kpi-nps-agent::before { background: #6366f1; }
+  .kpi .label { color: var(--muted); font-size: 12px; margin-bottom: 8px; font-weight: 500; }
+  .kpi .value { font-size: 28px; font-weight: 700; letter-spacing: -0.02em; }
+  .kpi .value .unit { font-size: 16px; font-weight: 600; color: var(--muted); margin-left: 2px; }
+  .kpi .sub { color: var(--muted); font-size: 12px; margin-top: 6px; display: flex; align-items: center; gap: 6px; }
+  .kpi .delta { font-size: 11px; font-weight: 600; padding: 2px 6px; border-radius: 4px; }
+  .delta.up { background: #E8F7EE; color: var(--promote); }
+  .delta.down { background: #FDECEF; color: var(--detract); }
+  .delta.flat { background: var(--bg); color: var(--muted); }
+
+  /* Tabs */
+  .tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--border); margin-bottom: 20px; overflow-x: auto; }
+  .tab { background: transparent; border: 0; padding: 12px 18px; color: var(--muted); cursor: pointer; font-size: 14px; font-weight: 600; border-bottom: 2px solid transparent; transition: all .15s; white-space: nowrap; }
+  .tab:hover { color: var(--text); }
+  .tab.active { color: var(--primary); border-bottom-color: var(--primary); }
+
+  /* Panels */
+  .panel-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+  .panel-grid.full { grid-template-columns: 1fr; }
+  .panel-grid.thirds { grid-template-columns: 1fr 1fr 1fr; }
+  .panel { background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow); }
+  .panel-head { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; gap: 8px; }
+  .panel h3 { margin: 0; font-size: 15px; font-weight: 700; }
+  .panel .desc { color: var(--muted); font-size: 12px; margin-top: 2px; }
+  .panel .chart-wrap { position: relative; height: 320px; }
+  .panel.tall .chart-wrap { height: 440px; }
+  .panel.short .chart-wrap { height: 240px; }
+
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  /* Filter chips */
+  .filter-row { display: flex; gap: 8px; align-items: center; margin-bottom: 16px; flex-wrap: wrap; }
+  .filter-row .label { font-size: 12px; color: var(--muted); margin-right: 4px; font-weight: 500; }
+  .chip { background: var(--panel); border: 1px solid var(--border); padding: 6px 14px; border-radius: 999px; cursor: pointer; font-size: 12px; font-weight: 500; transition: all .15s; color: var(--text-soft); }
+  .chip:hover { border-color: var(--primary); color: var(--primary); }
+  .chip.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+
+  /* Summary table (Daily) */
+  .summary-table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 13px; }
+  .summary-table th, .summary-table td { padding: 12px 10px; text-align: right; border-bottom: 1px solid var(--border-soft); }
+  .summary-table th:first-child, .summary-table td:first-child { text-align: left; }
+  .summary-table thead th { background: #FAFAFB; color: var(--muted); font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; border-bottom: 1px solid var(--border); }
+  .summary-table tbody tr:hover { background: #FAFAFB; }
+  .summary-table .indent { padding-left: 24px; color: var(--text-soft); }
+  .summary-table .num { font-variant-numeric: tabular-nums; font-weight: 600; }
+  .summary-table .num.zero { color: var(--neutral); font-weight: 400; }
+
+  /* Bullet legend */
+  .legend-row { display: flex; gap: 14px; flex-wrap: wrap; font-size: 12px; color: var(--text-soft); margin-bottom: 8px; }
+  .legend-row .dot { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 6px; vertical-align: middle; }
+
+  /* Insight box */
+  .insights { background: linear-gradient(135deg, #FFF8E6 0%, #FFFBEF 100%); border: 1px solid #FCE8B6; border-radius: var(--radius); padding: 16px 18px; margin-top: 16px; }
+  .insights h4 { margin: 0 0 8px; font-size: 13px; color: #8C5A00; display: flex; align-items: center; gap: 6px; font-weight: 700; }
+  .insights ul { margin: 0; padding-left: 20px; font-size: 13px; color: #5C3E08; }
+  .insights ul li { margin-bottom: 6px; }
+  .insights ul li strong { color: #3D2A05; }
+
+  .alert-box { background: #FDECEF; border: 1px solid #FAC1CB; border-radius: var(--radius); padding: 12px 14px; margin-bottom: 16px; font-size: 13px; color: #7E1727; }
+
+  /* Footer */
+  .footer { color: var(--muted); font-size: 12px; text-align: center; margin-top: 36px; padding-top: 16px; border-top: 1px solid var(--border); }
+
+  @media (max-width: 980px) {
+    .kpis { grid-template-columns: repeat(2, 1fr); }
+    .panel-grid { grid-template-columns: 1fr; }
+    .panel-grid.thirds { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <div class="header">
+    <div>
+      <div class="brand">
+        <span class="logo">집</span>
+        <h1 id="dashTitle">[오집사] 챗봇 운영 현황 대시보드</h1>
+      </div>
+      <div class="meta">
+        Source: <a id="srcLink" href="#" target="_blank">AI 챗봇 운영 현황 모니터링 시트</a>
+        · Last updated: <span id="lastUpdated">—</span>
+      </div>
+    </div>
+    <div class="periods">
+      <div class="pill"><strong>기간</strong><span id="periodLabel">—</span></div>
+      <div class="pill"><span class="badge-phase">PHASE</span> <span id="phaseLabel">—</span></div>
+    </div>
+  </div>
+
+  <div class="kpis">
+    <div class="kpi kpi-bot">
+      <div class="label">최근일 챗봇 인입율</div>
+      <div class="value"><span id="kpiInflow">—</span><span class="unit">%</span></div>
+      <div class="sub"><span id="kpiInflowDate">—</span> · <span class="delta" id="kpiInflowDelta">—</span></div>
+    </div>
+    <div class="kpi kpi-solve">
+      <div class="label">최근일 챗봇 자동완결율</div>
+      <div class="value"><span id="kpiSolve">—</span><span class="unit">%</span></div>
+      <div class="sub">전체 인입 대비 · <span class="delta" id="kpiSolveDelta">—</span></div>
+    </div>
+    <div class="kpi kpi-nps-bot">
+      <div class="label">최근일 챗봇 NPS</div>
+      <div class="value"><span id="kpiNpsBot">—</span><span class="unit">%</span></div>
+      <div class="sub">응답수 <span id="kpiNpsBotCount">—</span> · <span class="delta" id="kpiNpsBotDelta">—</span></div>
+    </div>
+    <div class="kpi kpi-nps-agent">
+      <div class="label">최근일 상담사 NPS</div>
+      <div class="value"><span id="kpiNpsAgent">—</span><span class="unit">%</span></div>
+      <div class="sub">전체 채널 · <span class="delta" id="kpiNpsAgentDelta">—</span></div>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" data-tab="overall">종합 현황</button>
+    <button class="tab" data-tab="daily">Daily (오늘)</button>
+    <button class="tab" data-tab="nps">NPS 분석</button>
+    <button class="tab" data-tab="weekly">주차/월별</button>
+  </div>
+
+  <!-- Tab: 종합 현황 -->
+  <section class="tab-panel active" id="tab-overall">
+    <div class="filter-row">
+      <span class="label">기간:</span>
+      <button class="chip active" data-range="all">전체</button>
+      <button class="chip" data-range="14">최근 14일</button>
+      <button class="chip" data-range="7">최근 7일</button>
+      <button class="chip" data-range="phase1">Phase 1 이후</button>
+    </div>
+    <div class="panel-grid">
+      <div class="panel tall">
+        <div class="panel-head">
+          <div>
+            <h3>일별 채팅 인입 흐름</h3>
+            <div class="desc">스택바 = 챗봇·챗봇→상담·상담직접 / 라인 = 채팅대비 챗봇종결율(%)</div>
+          </div>
+        </div>
+        <div class="chart-wrap"><canvas id="chartChatFlow"></canvas></div>
+      </div>
+      <div class="panel tall">
+        <div class="panel-head">
+          <div>
+            <h3>일별 챗봇 인입율 추이</h3>
+            <div class="desc">전체 인입 대비 챗봇 인입율(%) · 채팅 인입 대비 챗봇 종결율(%)</div>
+          </div>
+        </div>
+        <div class="chart-wrap"><canvas id="chartBotRates"></canvas></div>
+      </div>
+    </div>
+    <div class="insights">
+      <h4>⚠️ 살펴볼 시그널</h4>
+      <ul id="overallSignals"></ul>
+    </div>
+  </section>
+
+  <!-- Tab: Daily -->
+  <section class="tab-panel" id="tab-daily">
+    <div id="dailyNote" class="alert-box" style="display:none;"></div>
+    <div class="panel-grid">
+      <div class="panel">
+        <div class="panel-head">
+          <div>
+            <h3>오늘 시간대별 인입 추이</h3>
+            <div class="desc">11:30 / 13:30 / 15:30 / 17:30 / 마감 시점 누적 인입</div>
+          </div>
+          <span class="pill" style="font-size:11px"><strong>날짜</strong><span id="todayDate">—</span></span>
+        </div>
+        <div class="chart-wrap"><canvas id="chartTodayHourly"></canvas></div>
+      </div>
+      <div class="panel">
+        <div class="panel-head">
+          <div>
+            <h3>오늘 인입 종합</h3>
+            <div class="desc">시점별 누적 데이터 요약</div>
+          </div>
+        </div>
+        <div style="overflow-x: auto;">
+          <table class="summary-table" id="todayTable"></table>
+        </div>
+      </div>
+    </div>
+    <div class="panel" style="margin-top:16px;">
+      <div class="panel-head">
+        <div>
+          <h3>직전 영업일 비교 (참고)</h3>
+          <div class="desc">데일리 적재 데이터가 비어있을 때 직전 영업일 패턴으로 대체 표시</div>
+        </div>
+      </div>
+      <div style="overflow-x: auto;">
+        <table class="summary-table" id="lastBizDayTable"></table>
+      </div>
+    </div>
+  </section>
+
+  <!-- Tab: NPS -->
+  <section class="tab-panel" id="tab-nps">
+    <div class="panel-grid">
+      <div class="panel tall">
+        <div class="panel-head">
+          <div>
+            <h3>일별 챗봇 NPS 추이</h3>
+            <div class="desc">스택바 = 추천/모름/비추천 응답 수 · 라인 = NPS 지수(%)</div>
+          </div>
+        </div>
+        <div class="chart-wrap"><canvas id="chartNpsBot"></canvas></div>
+      </div>
+      <div class="panel tall">
+        <div class="panel-head">
+          <div>
+            <h3>일별 상담사 NPS 추이</h3>
+            <div class="desc">고객센터 NPS · 전체 채널 합산</div>
+          </div>
+        </div>
+        <div class="chart-wrap"><canvas id="chartNpsAgent"></canvas></div>
+      </div>
+    </div>
+    <div class="panel-grid" style="margin-top: 16px;">
+      <div class="panel">
+        <div class="panel-head">
+          <div>
+            <h3>챗봇 비추천 사유 분포</h3>
+            <div class="desc">월별 누적 · 전체 비추천 응답 중 선택된 사유 비율</div>
+          </div>
+        </div>
+        <div class="chart-wrap"><canvas id="chartReasonBot"></canvas></div>
+      </div>
+      <div class="panel">
+        <div class="panel-head">
+          <div>
+            <h3>NPS vs 챗봇 NPS 비교</h3>
+            <div class="desc">일별 · 상담사 NPS와 챗봇 NPS의 갭</div>
+          </div>
+        </div>
+        <div class="chart-wrap"><canvas id="chartNpsCompare"></canvas></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Tab: Weekly / Monthly -->
+  <section class="tab-panel" id="tab-weekly">
+    <div class="panel-grid">
+      <div class="panel tall">
+        <div class="panel-head">
+          <div>
+            <h3>주차별 챗봇 인입 흐름</h3>
+            <div class="desc">스택바 = 챗봇·챗봇→상담·상담직접 / 라인 = 챗봇 NPS(%)</div>
+          </div>
+        </div>
+        <div class="chart-wrap"><canvas id="chartWeekly"></canvas></div>
+      </div>
+      <div class="panel tall">
+        <div class="panel-head">
+          <div>
+            <h3>월별 비교</h3>
+            <div class="desc">3월 vs 4월 · 챗봇 인입율 / 종결율 / NPS</div>
+          </div>
+        </div>
+        <div class="chart-wrap"><canvas id="chartMonthly"></canvas></div>
+      </div>
+    </div>
+    <div class="panel" style="margin-top: 16px;">
+      <div class="panel-head">
+        <div>
+          <h3>주차 상세 테이블</h3>
+          <div class="desc">주차별 인입·처리·NPS 요약</div>
+        </div>
+      </div>
+      <div style="overflow-x: auto;">
+        <table class="summary-table" id="weeklyTable"></table>
+      </div>
+    </div>
+  </section>
+
+  <div class="footer">
+    데이터 출처: AI 챗봇 운영 현황 모니터링 시트 (수기 갱신 — data.json 교체) · 마지막 갱신 <span id="footerUpdated">—</span>
+  </div>
+</div>
+
+<script>
+const palette = {
+  primary: '#35C5F0',
+  bot: '#35C5F0',
+  botToAgent: '#FFB02E',
+  agent: '#6B6F76',
+  promote: '#45B26B',
+  neutral: '#B4B7BA',
+  detract: '#F03659',
+  accent: '#FF7A00',
+  text: '#1B1D1F',
+  textSoft: '#35383D',
+  muted: '#6B6F76',
+};
+
+Chart.defaults.font.family = '-apple-system, BlinkMacSystemFont, Pretendard, "Apple SD Gothic Neo", "Segoe UI", Roboto, sans-serif';
+Chart.defaults.font.size = 11;
+Chart.defaults.color = palette.textSoft;
+Chart.defaults.borderColor = '#E1E2E4';
+
+let DATA = null;
+let rangeFilter = 'all';
+const charts = {};
+
+fetch('./data.json')
+  .then(r => r.json())
+  .then(data => { DATA = data; renderAll(); })
+  .catch(err => {
+    document.querySelector('.container').insertAdjacentHTML('afterbegin',
+      `<div class="alert-box">data.json 로드 실패: ${err.message}<br><small>로컬에서는 file:// 대신 간단 서버로 열어주세요. 예: <code>cd ohouse-chatbot-dashboard && python3 -m http.server 8080</code></small></div>`);
+  });
+
+function fmtNum(n) { return (n ?? 0).toLocaleString(); }
+function fmtPct(n) { return (n == null) ? '—' : n.toFixed(1) + '%'; }
+function deltaBadge(curr, prev, suffix='%p') {
+  if (prev == null || curr == null) return '<span class="delta flat">—</span>';
+  const d = +(curr - prev).toFixed(1);
+  if (d > 0) return `<span class="delta up">▲ ${d}${suffix}</span>`;
+  if (d < 0) return `<span class="delta down">▼ ${Math.abs(d)}${suffix}</span>`;
+  return `<span class="delta flat">— 0${suffix}</span>`;
+}
+
+function getFilteredDaily() {
+  const all = DATA.daily;
+  if (rangeFilter === 'all') return all;
+  if (rangeFilter === 'phase1') return all.filter(d => d.phase === 'Phase1');
+  const n = parseInt(rangeFilter, 10);
+  return all.slice(-n);
+}
+
+function renderAll() {
+  // Header
+  document.getElementById('dashTitle').textContent = DATA.meta.title;
+  document.getElementById('srcLink').href = DATA.meta.sourceUrl;
+  document.getElementById('lastUpdated').textContent = DATA.meta.lastUpdated;
+  document.getElementById('footerUpdated').textContent = DATA.meta.lastUpdated;
+  document.getElementById('periodLabel').textContent = DATA.meta.periodDaily;
+  document.getElementById('phaseLabel').textContent = DATA.meta.phaseNote;
+
+  // KPIs
+  const last = DATA.daily[DATA.daily.length - 1];
+  const prev = DATA.daily[DATA.daily.length - 2];
+  document.getElementById('kpiInflow').textContent = last.botInflowRate.toFixed(2);
+  document.getElementById('kpiInflowDate').textContent = `${last.date} (${last.weekday})`;
+  document.getElementById('kpiInflowDelta').outerHTML = deltaBadge(last.botInflowRate, prev?.botInflowRate);
+
+  document.getElementById('kpiSolve').textContent = last.botSolveRate.toFixed(2);
+  document.getElementById('kpiSolveDelta').outerHTML = deltaBadge(last.botSolveRate, prev?.botSolveRate);
+
+  document.getElementById('kpiNpsBot').textContent = last.npsBot.toFixed(1);
+  const npsCount = last.npsBotPromote + last.npsBotNeutral + last.npsBotDetract;
+  document.getElementById('kpiNpsBotCount').textContent = npsCount;
+  document.getElementById('kpiNpsBotDelta').outerHTML = deltaBadge(last.npsBot, prev?.npsBot);
+
+  document.getElementById('kpiNpsAgent').textContent = last.npsAgent.toFixed(1);
+  document.getElementById('kpiNpsAgentDelta').outerHTML = deltaBadge(last.npsAgent, prev?.npsAgent);
+
+  // Tabs
+  document.querySelectorAll('.tab').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+      Object.values(charts).forEach(c => c && c.resize());
+    });
+  });
+
+  // Range chips
+  document.querySelectorAll('.chip[data-range]').forEach(chip => {
+    chip.addEventListener('click', () => {
+      document.querySelectorAll('.chip[data-range]').forEach(c => c.classList.remove('active'));
+      chip.classList.add('active');
+      rangeFilter = chip.dataset.range;
+      renderChatFlow();
+      renderBotRates();
+    });
+  });
+
+  renderChatFlow();
+  renderBotRates();
+  renderOverallSignals();
+  renderToday();
+  renderNpsBot();
+  renderNpsAgent();
+  renderReasonBot();
+  renderNpsCompare();
+  renderWeekly();
+  renderMonthly();
+  renderWeeklyTable();
+}
+
+// ---- Overall tab ----
+function renderChatFlow() {
+  const rows = getFilteredDaily();
+  const labels = rows.map(r => r.date.slice(5));
+  const datasets = [
+    { type: 'bar', label: '챗봇 자동완결', data: rows.map(r => r.botSolved), backgroundColor: palette.bot, stack: 'a', yAxisID: 'y', borderRadius: 3 },
+    { type: 'bar', label: '챗봇 → 상담사', data: rows.map(r => r.botToAgent), backgroundColor: palette.botToAgent, stack: 'a', yAxisID: 'y', borderRadius: 3 },
+    { type: 'bar', label: '상담사 직접', data: rows.map(r => r.agentDirect), backgroundColor: palette.agent, stack: 'a', yAxisID: 'y', borderRadius: 3 },
+    { type: 'line', label: '채팅대비 챗봇 종결율(%)', data: rows.map(r => r.chatBotSolveRate), borderColor: palette.detract, backgroundColor: palette.detract, yAxisID: 'y1', tension: 0.35, pointRadius: 3, borderWidth: 2 },
+  ];
+
+  if (charts.chatFlow) charts.chatFlow.destroy();
+  charts.chatFlow = new Chart(document.getElementById('chartChatFlow'), {
+    type: 'bar',
+    data: { labels, datasets },
+    options: chartOptionsStacked('티켓수', '종결율(%)')
+  });
+}
+
+function renderBotRates() {
+  const rows = getFilteredDaily();
+  const labels = rows.map(r => r.date.slice(5));
+
+  if (charts.botRates) charts.botRates.destroy();
+  charts.botRates = new Chart(document.getElementById('chartBotRates'), {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        { label: '전체 인입 대비 챗봇 인입율(%)', data: rows.map(r => r.botInflowRate), borderColor: palette.primary, backgroundColor: 'rgba(53, 197, 240, 0.12)', tension: 0.35, fill: true, pointRadius: 3, borderWidth: 2 },
+        { label: '챗봇 자동완결율(%)', data: rows.map(r => r.botSolveRate), borderColor: palette.accent, backgroundColor: 'rgba(255, 122, 0, 0.10)', tension: 0.35, fill: true, pointRadius: 3, borderWidth: 2 },
+        { label: '채팅 인입 대비 챗봇 종결율(%)', data: rows.map(r => r.chatBotSolveRate), borderColor: palette.promote, backgroundColor: 'rgba(69, 178, 107, 0.10)', tension: 0.35, fill: false, pointRadius: 3, borderWidth: 2, borderDash: [4, 3] },
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      scales: {
+        x: { grid: { display: false } },
+        y: { beginAtZero: true, ticks: { callback: v => v + '%' }, grid: { color: '#F1F1F3' } }
+      },
+      plugins: {
+        legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } },
+        tooltip: { callbacks: { label: ctx => `${ctx.dataset.label}: ${ctx.parsed.y.toFixed(2)}%` } }
+      }
+    }
+  });
+}
+
+function renderOverallSignals() {
+  const ul = document.getElementById('overallSignals');
+  const last = DATA.daily[DATA.daily.length - 1];
+  const prev = DATA.daily[DATA.daily.length - 2];
+  const phase1Days = DATA.daily.filter(d => d.phase === 'Phase1');
+  const pocAvgInflow = average(DATA.daily.filter(d => d.phase === 'PoC').map(d => d.botInflowRate));
+  const p1AvgInflow = average(phase1Days.map(d => d.botInflowRate));
+  const items = [];
+  if (phase1Days.length > 0) {
+    items.push(`<strong>Phase 1 전환 후 챗봇 인입율 ${p1AvgInflow.toFixed(1)}% (PoC 평균 ${pocAvgInflow.toFixed(1)}%, +${(p1AvgInflow-pocAvgInflow).toFixed(1)}%p)</strong> · Lv.3 확장 효과 추적 필요`);
+  }
+  const detractDays = DATA.daily.filter(d => d.npsBot != null && d.npsBot <= 30 && d.npsBot > 0);
+  if (detractDays.length > 0) {
+    const worst = detractDays.reduce((a, b) => a.npsBot < b.npsBot ? a : b);
+    items.push(`챗봇 NPS 30% 이하 일자 <strong>${detractDays.length}건</strong> · 최저 ${worst.date} (${worst.npsBot}%, 응답 ${worst.npsBotPromote+worst.npsBotNeutral+worst.npsBotDetract}건) · 시나리오 회고 권장`);
+  }
+  const todayNote = DATA.todayHourly?.note;
+  if (todayNote) items.push(`Daily 시트 적재 상태: ${todayNote}`);
+  ul.innerHTML = items.map(t => `<li>${t}</li>`).join('');
+}
+
+function average(arr) { const v = arr.filter(x => x != null); return v.length ? v.reduce((s,x)=>s+x,0)/v.length : 0; }
+
+// ---- Daily tab ----
+function renderToday() {
+  const today = DATA.todayHourly;
+  document.getElementById('todayDate').textContent = today.date;
+  if (today.note) {
+    const note = document.getElementById('dailyNote');
+    note.innerHTML = `<strong>안내:</strong> ${today.note}`;
+    note.style.display = 'block';
+  }
+  // Hourly chart
+  if (charts.todayHourly) charts.todayHourly.destroy();
+  charts.todayHourly = new Chart(document.getElementById('chartTodayHourly'), {
+    type: 'bar',
+    data: {
+      labels: today.slots.map(s => s.slot),
+      datasets: [
+        { label: '통화', data: today.slots.map(s => s.call), backgroundColor: palette.agent, stack: 'a', borderRadius: 3 },
+        { label: '챗봇 자동완결', data: today.slots.map(s => s.botSolved), backgroundColor: palette.bot, stack: 'a', borderRadius: 3 },
+        { label: '챗봇 → 상담사', data: today.slots.map(s => s.botToAgent), backgroundColor: palette.botToAgent, stack: 'a', borderRadius: 3 },
+        { label: '상담사 직접', data: today.slots.map(s => s.agentDirect), backgroundColor: '#8E94A0', stack: 'a', borderRadius: 3 },
+      ]
+    },
+    options: chartOptionsStacked('티켓수')
+  });
+
+  // Today table
+  const tbl = document.getElementById('todayTable');
+  const slotsHeader = today.slots.map(s => `<th>${s.slot}</th>`).join('');
+  let rows = '';
+  const rowDefs = [
+    { key: 'total', label: '총 인입', indent: false },
+    { key: 'call', label: '통화', indent: true },
+    { key: 'chat', label: '채팅', indent: true },
+    { key: 'botSolved', label: '챗봇 자동완결', indent: true },
+    { key: 'botToAgent', label: '챗봇 → 상담사', indent: true },
+    { key: 'agentDirect', label: '상담사 직접', indent: true },
+  ];
+  rowDefs.forEach(def => {
+    const cells = today.slots.map(s => {
+      const v = s[def.key];
+      const cls = v === 0 ? 'num zero' : 'num';
+      return `<td class="${cls}">${fmtNum(v)}</td>`;
+    }).join('');
+    rows += `<tr><td class="${def.indent ? 'indent' : ''}">${def.label}</td>${cells}</tr>`;
+  });
+  tbl.innerHTML = `<thead><tr><th>구분</th>${slotsHeader}</tr></thead><tbody>${rows}</tbody>`;
+
+  // Last business day reference table
+  renderLastBizDay();
+}
+
+function renderLastBizDay() {
+  const last = DATA.daily[DATA.daily.length - 1];
+  if (!last) return;
+  const tbl = document.getElementById('lastBizDayTable');
+  tbl.innerHTML = `
+    <thead><tr><th>구분</th><th>${last.date} (${last.weekday})</th><th>비율</th></tr></thead>
+    <tbody>
+      <tr><td>총 인입</td><td class="num">${fmtNum(last.total)}</td><td>100.0%</td></tr>
+      <tr><td class="indent">통화</td><td class="num">${fmtNum(last.call)}</td><td>${(last.call/last.total*100).toFixed(1)}%</td></tr>
+      <tr><td class="indent">채팅</td><td class="num">${fmtNum(last.chat)}</td><td>${(last.chat/last.total*100).toFixed(1)}%</td></tr>
+      <tr><td class="indent">  ├ 챗봇 자동완결</td><td class="num">${fmtNum(last.botSolved)}</td><td>${(last.botSolved/last.total*100).toFixed(2)}%</td></tr>
+      <tr><td class="indent">  ├ 챗봇 → 상담사</td><td class="num">${fmtNum(last.botToAgent)}</td><td>${(last.botToAgent/last.total*100).toFixed(2)}%</td></tr>
+      <tr><td class="indent">  └ 상담사 직접</td><td class="num">${fmtNum(last.agentDirect)}</td><td>${(last.agentDirect/last.total*100).toFixed(2)}%</td></tr>
+    </tbody>
+  `;
+}
+
+// ---- NPS tab ----
+function renderNpsBot() {
+  const rows = DATA.daily.filter(d => d.npsBot != null);
+  if (charts.npsBot) charts.npsBot.destroy();
+  charts.npsBot = new Chart(document.getElementById('chartNpsBot'), {
+    type: 'bar',
+    data: {
+      labels: rows.map(r => r.date.slice(5)),
+      datasets: [
+        { type: 'bar', label: '추천', data: rows.map(r => r.npsBotPromote), backgroundColor: palette.promote, stack: 'a', yAxisID: 'y', borderRadius: 3 },
+        { type: 'bar', label: '모름', data: rows.map(r => r.npsBotNeutral), backgroundColor: palette.neutral, stack: 'a', yAxisID: 'y', borderRadius: 3 },
+        { type: 'bar', label: '비추천', data: rows.map(r => r.npsBotDetract), backgroundColor: palette.detract, stack: 'a', yAxisID: 'y', borderRadius: 3 },
+        { type: 'line', label: 'NPS(%)', data: rows.map(r => r.npsBot), borderColor: palette.text, backgroundColor: palette.text, yAxisID: 'y1', tension: 0.3, pointRadius: 4, borderWidth: 2 },
+      ]
+    },
+    options: chartOptionsStacked('응답수', 'NPS(%)', 100)
+  });
+}
+
+function renderNpsAgent() {
+  const rows = DATA.daily;
+  if (charts.npsAgent) charts.npsAgent.destroy();
+  charts.npsAgent = new Chart(document.getElementById('chartNpsAgent'), {
+    type: 'line',
+    data: {
+      labels: rows.map(r => r.date.slice(5)),
+      datasets: [
+        { label: '상담사 NPS(%)', data: rows.map(r => r.npsAgent), borderColor: '#6366F1', backgroundColor: 'rgba(99, 102, 241, 0.12)', tension: 0.3, fill: true, pointRadius: 3, borderWidth: 2 },
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      scales: {
+        x: { grid: { display: false } },
+        y: { beginAtZero: true, max: 100, ticks: { callback: v => v + '%' }, grid: { color: '#F1F1F3' } }
+      },
+      plugins: { legend: { position: 'bottom' } }
+    }
+  });
+}
+
+function renderReasonBot() {
+  const rows = DATA.npsReasonsBot;
+  if (charts.reasonBot) charts.reasonBot.destroy();
+  charts.reasonBot = new Chart(document.getElementById('chartReasonBot'), {
+    type: 'bar',
+    data: {
+      labels: rows.map(r => r.reason),
+      datasets: [
+        { label: '3월', data: rows.map(r => r.marCount), backgroundColor: '#B4B7BA', borderRadius: 4 },
+        { label: '4월', data: rows.map(r => r.aprCount), backgroundColor: palette.detract, borderRadius: 4 },
+      ]
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true, maintainAspectRatio: false,
+      scales: {
+        x: { beginAtZero: true, grid: { color: '#F1F1F3' } },
+        y: { grid: { display: false } }
+      },
+      plugins: { legend: { position: 'bottom' } }
+    }
+  });
+}
+
+function renderNpsCompare() {
+  const rows = DATA.daily.filter(d => d.npsBot != null);
+  if (charts.npsCompare) charts.npsCompare.destroy();
+  charts.npsCompare = new Chart(document.getElementById('chartNpsCompare'), {
+    type: 'line',
+    data: {
+      labels: rows.map(r => r.date.slice(5)),
+      datasets: [
+        { label: '챗봇 NPS', data: rows.map(r => r.npsBot), borderColor: palette.bot, backgroundColor: 'rgba(53, 197, 240, 0.10)', tension: 0.3, fill: false, pointRadius: 3, borderWidth: 2 },
+        { label: '상담사 NPS', data: rows.map(r => r.npsAgent), borderColor: '#6366F1', backgroundColor: 'rgba(99, 102, 241, 0.10)', tension: 0.3, fill: false, pointRadius: 3, borderWidth: 2 },
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      scales: {
+        x: { grid: { display: false } },
+        y: { beginAtZero: true, max: 100, ticks: { callback: v => v + '%' }, grid: { color: '#F1F1F3' } }
+      },
+      plugins: { legend: { position: 'bottom' } }
+    }
+  });
+}
+
+// ---- Weekly / Monthly tab ----
+function renderWeekly() {
+  const rows = DATA.weekly;
+  if (charts.weekly) charts.weekly.destroy();
+  charts.weekly = new Chart(document.getElementById('chartWeekly'), {
+    type: 'bar',
+    data: {
+      labels: rows.map(r => `${r.label}\n${r.range}`),
+      datasets: [
+        { type: 'bar', label: '챗봇 자동완결', data: rows.map(r => r.botSolved), backgroundColor: palette.bot, stack: 'a', yAxisID: 'y', borderRadius: 3 },
+        { type: 'bar', label: '챗봇 → 상담사', data: rows.map(r => r.botToAgent), backgroundColor: palette.botToAgent, stack: 'a', yAxisID: 'y', borderRadius: 3 },
+        { type: 'bar', label: '상담사 직접', data: rows.map(r => r.agentDirect), backgroundColor: palette.agent, stack: 'a', yAxisID: 'y', borderRadius: 3 },
+        { type: 'line', label: '챗봇 NPS(%)', data: rows.map(r => r.npsBot), borderColor: palette.detract, backgroundColor: palette.detract, yAxisID: 'y1', tension: 0.3, pointRadius: 4, borderWidth: 2 },
+      ]
+    },
+    options: chartOptionsStacked('티켓수', 'NPS(%)', 100)
+  });
+}
+
+function renderMonthly() {
+  const rows = DATA.monthly;
+  if (charts.monthly) charts.monthly.destroy();
+  charts.monthly = new Chart(document.getElementById('chartMonthly'), {
+    type: 'bar',
+    data: {
+      labels: rows.map(r => r.label),
+      datasets: [
+        { label: '챗봇 인입율(%)', data: rows.map(r => r.botInflowRate), backgroundColor: palette.primary, borderRadius: 6 },
+        { label: '챗봇 자동완결율(%)', data: rows.map(r => r.botSolveRate), backgroundColor: palette.accent, borderRadius: 6 },
+        { label: '채팅 대비 챗봇 종결율(%)', data: rows.map(r => r.chatBotSolveRate), backgroundColor: palette.promote, borderRadius: 6 },
+        { label: '챗봇 NPS(%)', data: rows.map(r => r.npsBot), backgroundColor: '#6366F1', borderRadius: 6 },
+        { label: '상담사 NPS(%)', data: rows.map(r => r.npsAgent), backgroundColor: '#8B5CF6', borderRadius: 6 },
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      scales: {
+        x: { grid: { display: false } },
+        y: { beginAtZero: true, ticks: { callback: v => v + '%' }, grid: { color: '#F1F1F3' } }
+      },
+      plugins: {
+        legend: { position: 'bottom' },
+        tooltip: { callbacks: { label: ctx => `${ctx.dataset.label}: ${ctx.parsed.y.toFixed(2)}%` } }
+      }
+    }
+  });
+}
+
+function renderWeeklyTable() {
+  const rows = DATA.weekly;
+  const head = `<thead><tr>
+    <th>주차</th><th>기간</th><th>전체 인입</th><th>채팅</th>
+    <th>챗봇 자동완결</th><th>챗봇→상담</th><th>상담직접</th>
+    <th>챗봇 인입율</th><th>자동완결율</th><th>챗봇 NPS</th><th>상담사 NPS</th>
+  </tr></thead>`;
+  const body = rows.map(r => `<tr>
+    <td><strong>${r.label}</strong></td>
+    <td>${r.range}</td>
+    <td class="num">${fmtNum(r.total)}</td>
+    <td class="num">${fmtNum(r.chat)}</td>
+    <td class="num">${fmtNum(r.botSolved)}</td>
+    <td class="num">${fmtNum(r.botToAgent)}</td>
+    <td class="num">${fmtNum(r.agentDirect)}</td>
+    <td class="num">${r.botInflowRate.toFixed(2)}%</td>
+    <td class="num">${r.botSolveRate.toFixed(2)}%</td>
+    <td class="num">${r.npsBot.toFixed(1)}%</td>
+    <td class="num">${r.npsAgent.toFixed(1)}%</td>
+  </tr>`).join('');
+  document.getElementById('weeklyTable').innerHTML = head + '<tbody>' + body + '</tbody>';
+}
+
+// ---- Shared chart options ----
+function chartOptionsStacked(leftLabel, rightLabel, rightMax) {
+  const opts = {
+    responsive: true, maintainAspectRatio: false,
+    interaction: { mode: 'index', intersect: false },
+    scales: {
+      x: { stacked: true, grid: { display: false } },
+      y: { stacked: true, beginAtZero: true, title: { display: true, text: leftLabel }, grid: { color: '#F1F1F3' } }
+    },
+    plugins: {
+      legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 }, padding: 14 } },
+      tooltip: {
+        backgroundColor: 'rgba(27, 29, 31, 0.95)',
+        padding: 10, cornerRadius: 6,
+        callbacks: { label: ctx => `${ctx.dataset.label}: ${typeof ctx.parsed.y === 'number' ? ctx.parsed.y.toLocaleString() : ctx.parsed.y}` }
+      }
+    }
+  };
+  if (rightLabel) {
+    opts.scales.y1 = { beginAtZero: true, position: 'right', grid: { display: false }, title: { display: true, text: rightLabel }, ticks: { callback: v => v + '%' } };
+    if (rightMax) opts.scales.y1.max = rightMax;
+  }
+  return opts;
+}
+</script>
+</body>
+</html>
