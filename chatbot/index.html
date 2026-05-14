@@ -155,7 +155,6 @@
     </div>
     <div class="periods">
       <div class="pill"><strong>기간</strong><span id="periodLabel">—</span></div>
-      <div class="pill"><span class="badge-phase">PHASE</span> <span id="phaseLabel">—</span></div>
     </div>
   </div>
 
@@ -404,7 +403,6 @@ function renderAll() {
   document.getElementById('lastUpdated').textContent = DATA.meta.lastUpdated;
   document.getElementById('footerUpdated').textContent = DATA.meta.lastUpdated;
   document.getElementById('periodLabel').textContent = DATA.meta.periodDaily;
-  document.getElementById('phaseLabel').textContent = DATA.meta.phaseNote;
 
   // KPIs
   const last = DATA.daily[DATA.daily.length - 1];
