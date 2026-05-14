@@ -223,39 +223,15 @@
 
   <!-- Tab: Daily -->
   <section class="tab-panel" id="tab-daily">
-    <div id="dailyNote" class="alert-box" style="display:none;"></div>
-    <div class="panel-grid">
-      <div class="panel">
-        <div class="panel-head">
-          <div>
-            <h3>오늘 시간대별 인입 추이</h3>
-            <div class="desc">11:30 / 13:30 / 15:30 / 17:30 / 마감 시점 누적 인입</div>
-          </div>
-          <span class="pill" style="font-size:11px"><strong>날짜</strong><span id="todayDate">—</span></span>
-        </div>
-        <div class="chart-wrap"><canvas id="chartTodayHourly"></canvas></div>
-      </div>
-      <div class="panel">
-        <div class="panel-head">
-          <div>
-            <h3>오늘 인입 종합</h3>
-            <div class="desc">시점별 누적 데이터 요약</div>
-          </div>
-        </div>
-        <div style="overflow-x: auto;">
-          <table class="summary-table" id="todayTable"></table>
-        </div>
-      </div>
-    </div>
-    <div class="panel" style="margin-top:16px;">
+    <div class="panel">
       <div class="panel-head">
         <div>
-          <h3>직전 영업일 비교 (참고)</h3>
-          <div class="desc">데일리 적재 데이터가 비어있을 때 직전 영업일 패턴으로 대체 표시</div>
+          <h3>일자별 인입 raw</h3>
+          <div class="desc">종합 현황 시트 기반 · 최근 14영업일</div>
         </div>
       </div>
       <div style="overflow-x: auto;">
-        <table class="summary-table" id="lastBizDayTable"></table>
+        <table class="summary-table" id="dailyRawTable"></table>
       </div>
     </div>
   </section>
@@ -511,8 +487,6 @@ function renderOverallSignals() {
     const worst = detractDays.reduce((a, b) => a.npsBot < b.npsBot ? a : b);
     items.push(`챗봇 NPS 30% 이하 일자 <strong>${detractDays.length}건</strong> · 최저 ${worst.date} (${worst.npsBot}%, 응답 ${worst.npsBotPromote+worst.npsBotNeutral+worst.npsBotDetract}건) · 시나리오 회고 권장`);
   }
-  const todayNote = DATA.todayHourly?.note;
-  if (todayNote) items.push(`Daily 시트 적재 상태: ${todayNote}`);
   ul.innerHTML = items.map(t => `<li>${t}</li>`).join('');
 }
 
@@ -520,70 +494,29 @@ function average(arr) { const v = arr.filter(x => x != null); return v.length ? 
 
 // ---- Daily tab ----
 function renderToday() {
-  const today = DATA.todayHourly;
-  document.getElementById('todayDate').textContent = today.date;
-  if (today.note) {
-    const note = document.getElementById('dailyNote');
-    note.innerHTML = `<strong>안내:</strong> ${today.note}`;
-    note.style.display = 'block';
-  }
-  // Hourly chart
-  if (charts.todayHourly) charts.todayHourly.destroy();
-  charts.todayHourly = new Chart(document.getElementById('chartTodayHourly'), {
-    type: 'bar',
-    data: {
-      labels: today.slots.map(s => s.slot),
-      datasets: [
-        { label: '통화', data: today.slots.map(s => s.call), backgroundColor: palette.agent, stack: 'a', borderRadius: 3 },
-        { label: '챗봇 자동완결', data: today.slots.map(s => s.botSolved), backgroundColor: palette.bot, stack: 'a', borderRadius: 3 },
-        { label: '챗봇 → 상담사', data: today.slots.map(s => s.botToAgent), backgroundColor: palette.botToAgent, stack: 'a', borderRadius: 3 },
-        { label: '상담사 직접', data: today.slots.map(s => s.agentDirect), backgroundColor: '#8E94A0', stack: 'a', borderRadius: 3 },
-      ]
-    },
-    options: chartOptionsStacked('티켓수')
-  });
-
-  // Today table
-  const tbl = document.getElementById('todayTable');
-  const slotsHeader = today.slots.map(s => `<th>${s.slot}</th>`).join('');
-  let rows = '';
-  const rowDefs = [
-    { key: 'total', label: '총 인입', indent: false },
-    { key: 'call', label: '통화', indent: true },
-    { key: 'chat', label: '채팅', indent: true },
-    { key: 'botSolved', label: '챗봇 자동완결', indent: true },
-    { key: 'botToAgent', label: '챗봇 → 상담사', indent: true },
-    { key: 'agentDirect', label: '상담사 직접', indent: true },
+  const rows = DATA.daily.slice(-14);
+  const tbl = document.getElementById('dailyRawTable');
+  const cols = [
+    { key: 'total',            label: '총 인입',         fmt: v => fmtNum(v) },
+    { key: 'call',             label: '통화',            fmt: v => fmtNum(v) },
+    { key: 'chat',             label: '채팅',            fmt: v => fmtNum(v) },
+    { key: 'botSolved',        label: '챗봇 자동완결',   fmt: v => fmtNum(v) },
+    { key: 'botToAgent',       label: '챗봇→상담사',     fmt: v => fmtNum(v) },
+    { key: 'agentDirect',      label: '상담사 직접',     fmt: v => fmtNum(v) },
+    { key: 'botInflowRate',    label: '챗봇 인입율',     fmt: v => fmtPct(v) },
+    { key: 'botSolveRate',     label: '챗봇 자동완결율', fmt: v => fmtPct(v) },
+    { key: 'chatBotSolveRate', label: '채팅 자동완결율', fmt: v => fmtPct(v) },
   ];
-  rowDefs.forEach(def => {
-    const cells = today.slots.map(s => {
-      const v = s[def.key];
-      const cls = v === 0 ? 'num zero' : 'num';
-      return `<td class="${cls}">${fmtNum(v)}</td>`;
+  const head = `<thead><tr><th>날짜</th>${cols.map(c => `<th>${c.label}</th>`).join('')}</tr></thead>`;
+  const body = rows.map(r => {
+    const cells = cols.map(c => {
+      const v = r[c.key];
+      const cls = (v === 0 || v == null) ? 'num zero' : 'num';
+      return `<td class="${cls}">${c.fmt(v)}</td>`;
     }).join('');
-    rows += `<tr><td class="${def.indent ? 'indent' : ''}">${def.label}</td>${cells}</tr>`;
-  });
-  tbl.innerHTML = `<thead><tr><th>구분</th>${slotsHeader}</tr></thead><tbody>${rows}</tbody>`;
-
-  // Last business day reference table
-  renderLastBizDay();
-}
-
-function renderLastBizDay() {
-  const last = DATA.daily[DATA.daily.length - 1];
-  if (!last) return;
-  const tbl = document.getElementById('lastBizDayTable');
-  tbl.innerHTML = `
-    <thead><tr><th>구분</th><th>${last.date} (${last.weekday})</th><th>비율</th></tr></thead>
-    <tbody>
-      <tr><td>총 인입</td><td class="num">${fmtNum(last.total)}</td><td>100.0%</td></tr>
-      <tr><td class="indent">통화</td><td class="num">${fmtNum(last.call)}</td><td>${(last.call/last.total*100).toFixed(1)}%</td></tr>
-      <tr><td class="indent">채팅</td><td class="num">${fmtNum(last.chat)}</td><td>${(last.chat/last.total*100).toFixed(1)}%</td></tr>
-      <tr><td class="indent">  ├ 챗봇 자동완결</td><td class="num">${fmtNum(last.botSolved)}</td><td>${(last.botSolved/last.total*100).toFixed(2)}%</td></tr>
-      <tr><td class="indent">  ├ 챗봇 → 상담사</td><td class="num">${fmtNum(last.botToAgent)}</td><td>${(last.botToAgent/last.total*100).toFixed(2)}%</td></tr>
-      <tr><td class="indent">  └ 상담사 직접</td><td class="num">${fmtNum(last.agentDirect)}</td><td>${(last.agentDirect/last.total*100).toFixed(2)}%</td></tr>
-    </tbody>
-  `;
+    return `<tr><td>${r.date} (${r.weekday})</td>${cells}</tr>`;
+  }).join('');
+  tbl.innerHTML = `${head}<tbody>${body}</tbody>`;
 }
 
 // ---- NPS tab ----
