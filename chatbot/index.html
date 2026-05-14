@@ -18,7 +18,7 @@
 
     --primary: #35C5F0;        /* Ohouse cyan */
     --primary-soft: #E6F7FD;
-    --accent: #FF7A00;         /* Ohouse orange (Phase 1 강조) */
+    --accent: #FF7A00;         /* Ohouse orange */
     --bot: #35C5F0;
     --botToAgent: #FFB02E;
     --agent: #6B6F76;
@@ -59,7 +59,6 @@
   .header .periods { display: flex; gap: 8px; font-size: 12px; flex-wrap: wrap; }
   .pill { background: var(--panel); border: 1px solid var(--border); border-radius: 999px; padding: 6px 14px; box-shadow: var(--shadow); }
   .pill strong { color: var(--text); margin-right: 6px; font-weight: 600; }
-  .badge-phase { display: inline-flex; align-items: center; gap: 4px; background: var(--accent); color: #fff; padding: 3px 10px; border-radius: 999px; font-size: 11px; font-weight: 600; }
 
   /* KPI Cards */
   .kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
@@ -195,7 +194,6 @@
       <button class="chip active" data-range="all">전체</button>
       <button class="chip" data-range="14">최근 14일</button>
       <button class="chip" data-range="7">최근 7일</button>
-      <button class="chip" data-range="phase1">Phase 1 이후</button>
     </div>
     <div class="panel-grid">
       <div class="panel tall">
@@ -391,7 +389,6 @@ function deltaBadge(curr, prev, suffix='%p') {
 function getFilteredDaily() {
   const all = DATA.daily;
   if (rangeFilter === 'all') return all;
-  if (rangeFilter === 'phase1') return all.filter(d => d.phase === 'Phase1');
   const n = parseInt(rangeFilter, 10);
   return all.slice(-n);
 }
@@ -508,15 +505,7 @@ function renderBotRates() {
 
 function renderOverallSignals() {
   const ul = document.getElementById('overallSignals');
-  const last = DATA.daily[DATA.daily.length - 1];
-  const prev = DATA.daily[DATA.daily.length - 2];
-  const phase1Days = DATA.daily.filter(d => d.phase === 'Phase1');
-  const pocAvgInflow = average(DATA.daily.filter(d => d.phase === 'PoC').map(d => d.botInflowRate));
-  const p1AvgInflow = average(phase1Days.map(d => d.botInflowRate));
   const items = [];
-  if (phase1Days.length > 0) {
-    items.push(`<strong>Phase 1 전환 후 챗봇 인입율 ${p1AvgInflow.toFixed(1)}% (PoC 평균 ${pocAvgInflow.toFixed(1)}%, +${(p1AvgInflow-pocAvgInflow).toFixed(1)}%p)</strong> · Lv.3 확장 효과 추적 필요`);
-  }
   const detractDays = DATA.daily.filter(d => d.npsBot != null && d.npsBot <= 30 && d.npsBot > 0);
   if (detractDays.length > 0) {
     const worst = detractDays.reduce((a, b) => a.npsBot < b.npsBot ? a : b);
