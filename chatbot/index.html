@@ -109,7 +109,7 @@
   .summary-table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 13px; }
   .summary-table th, .summary-table td { padding: 12px 10px; text-align: right; border-bottom: 1px solid var(--border-soft); }
   .summary-table th:first-child, .summary-table td:first-child { text-align: left; }
-  .summary-table thead th { background: #FAFAFB; color: var(--muted); font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; border-bottom: 1px solid var(--border); }
+  .summary-table thead th { background: #FAFAFB; color: var(--muted); font-size: 11px; font-weight: 600; word-break: keep-all; line-height: 1.35; min-width: 62px; vertical-align: bottom; border-bottom: 1px solid var(--border); }
   .summary-table tbody tr:hover { background: #FAFAFB; }
   .summary-table .indent { padding-left: 24px; color: var(--text-soft); }
   .summary-table .num { font-variant-numeric: tabular-nums; font-weight: 600; }
@@ -159,24 +159,24 @@
 
   <div class="kpis">
     <div class="kpi kpi-bot">
-      <div class="label">최근일 챗봇 인입율</div>
-      <div class="value"><span id="kpiInflow">—</span><span class="unit">%</span></div>
-      <div class="sub"><span id="kpiInflowDate">—</span> · <span class="delta" id="kpiInflowDelta">—</span></div>
+      <div class="label">최근일 커머스 챗봇 단독 처리율</div>
+      <div class="value"><span id="kpiSolo">—</span><span class="unit">%</span></div>
+      <div class="sub"><span id="kpiSoloDate">—</span> · <span class="delta" id="kpiSoloDelta">—</span></div>
     </div>
     <div class="kpi kpi-solve">
-      <div class="label">최근일 챗봇-챗봇 처리율</div>
-      <div class="value"><span id="kpiSolve">—</span><span class="unit">%</span></div>
-      <div class="sub">콜+챗 티켓 대비 · <span class="delta" id="kpiSolveDelta">—</span></div>
+      <div class="label">최근일 채팅 챗봇 단독 처리율</div>
+      <div class="value"><span id="kpiChat">—</span><span class="unit">%</span></div>
+      <div class="sub">채팅 티켓 대비 · <span class="delta" id="kpiChatDelta">—</span></div>
     </div>
     <div class="kpi kpi-nps-bot">
+      <div class="label">최근일 콜+챗 챗봇 단독 처리율</div>
+      <div class="value"><span id="kpiCall">—</span><span class="unit">%</span></div>
+      <div class="sub">콜+챗 티켓 대비 · <span class="delta" id="kpiCallDelta">—</span></div>
+    </div>
+    <div class="kpi kpi-nps-agent">
       <div class="label">최근일 챗봇 NPS</div>
       <div class="value"><span id="kpiNpsBot">—</span><span class="unit">%</span></div>
       <div class="sub">응답수 <span id="kpiNpsBotCount">—</span> · <span class="delta" id="kpiNpsBotDelta">—</span></div>
-    </div>
-    <div class="kpi kpi-nps-agent">
-      <div class="label">최근일 상담사 NPS</div>
-      <div class="value"><span id="kpiNpsAgent">—</span><span class="unit">%</span></div>
-      <div class="sub">전체 채널 · <span class="delta" id="kpiNpsAgentDelta">—</span></div>
     </div>
   </div>
 
@@ -380,20 +380,20 @@ function renderAll() {
   // KPIs
   const last = DATA.daily[DATA.daily.length - 1];
   const prev = DATA.daily[DATA.daily.length - 2];
-  document.getElementById('kpiInflow').textContent = last.botInflowRate.toFixed(2);
-  document.getElementById('kpiInflowDate').textContent = `${last.date} (${last.weekday})`;
-  document.getElementById('kpiInflowDelta').outerHTML = deltaBadge(last.botInflowRate, prev?.botInflowRate);
+  document.getElementById('kpiSolo').textContent = last.chatBotSoloRate.toFixed(2);
+  document.getElementById('kpiSoloDate').textContent = `${last.date} (${last.weekday})`;
+  document.getElementById('kpiSoloDelta').outerHTML = deltaBadge(last.chatBotSoloRate, prev?.chatBotSoloRate);
 
-  document.getElementById('kpiSolve').textContent = last.botSolveRate.toFixed(2);
-  document.getElementById('kpiSolveDelta').outerHTML = deltaBadge(last.botSolveRate, prev?.botSolveRate);
+  document.getElementById('kpiChat').textContent = last.chatBotSolveRate.toFixed(2);
+  document.getElementById('kpiChatDelta').outerHTML = deltaBadge(last.chatBotSolveRate, prev?.chatBotSolveRate);
+
+  document.getElementById('kpiCall').textContent = last.botSolveRate.toFixed(2);
+  document.getElementById('kpiCallDelta').outerHTML = deltaBadge(last.botSolveRate, prev?.botSolveRate);
 
   document.getElementById('kpiNpsBot').textContent = last.npsBot.toFixed(1);
   const npsCount = last.npsBotPromote + last.npsBotNeutral + last.npsBotDetract;
   document.getElementById('kpiNpsBotCount').textContent = npsCount;
   document.getElementById('kpiNpsBotDelta').outerHTML = deltaBadge(last.npsBot, prev?.npsBot);
-
-  document.getElementById('kpiNpsAgent').textContent = last.npsAgent.toFixed(1);
-  document.getElementById('kpiNpsAgentDelta').outerHTML = deltaBadge(last.npsAgent, prev?.npsAgent);
 
   // Tabs
   document.querySelectorAll('.tab').forEach(btn => {
