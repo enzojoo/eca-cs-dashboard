@@ -164,9 +164,9 @@
       <div class="sub"><span id="kpiInflowDate">—</span> · <span class="delta" id="kpiInflowDelta">—</span></div>
     </div>
     <div class="kpi kpi-solve">
-      <div class="label">최근일 챗봇 자동완결율</div>
+      <div class="label">최근일 챗봇-챗봇 처리율</div>
       <div class="value"><span id="kpiSolve">—</span><span class="unit">%</span></div>
-      <div class="sub">전체 인입 대비 · <span class="delta" id="kpiSolveDelta">—</span></div>
+      <div class="sub">콜+챗 티켓 대비 · <span class="delta" id="kpiSolveDelta">—</span></div>
     </div>
     <div class="kpi kpi-nps-bot">
       <div class="label">최근일 챗봇 NPS</div>
@@ -200,7 +200,7 @@
         <div class="panel-head">
           <div>
             <h3>일별 채팅 인입 흐름</h3>
-            <div class="desc">스택바 = 챗봇·챗봇→상담·상담직접 / 라인 = 채팅대비 챗봇종결율(%)</div>
+            <div class="desc">스택바 = 챗봇·챗봇→상담·상담직접 / 라인 = 채팅 티켓 대비 챗봇-챗봇 처리율(%)</div>
           </div>
         </div>
         <div class="chart-wrap"><canvas id="chartChatFlow"></canvas></div>
@@ -208,8 +208,8 @@
       <div class="panel tall">
         <div class="panel-head">
           <div>
-            <h3>일별 챗봇 인입율 추이</h3>
-            <div class="desc">전체 인입 대비 챗봇 인입율(%) · 채팅 인입 대비 챗봇 종결율(%)</div>
+            <h3>일별 챗봇 커버리지 추이</h3>
+            <div class="desc">종합 현황 시트 커버리지 5종 (%) · 구분값 시트 기준</div>
           </div>
         </div>
         <div class="chart-wrap"><canvas id="chartBotRates"></canvas></div>
@@ -296,7 +296,7 @@
         <div class="panel-head">
           <div>
             <h3>월별 비교</h3>
-            <div class="desc">3월 vs 4월 · 챗봇 인입율 / 종결율 / NPS</div>
+            <div class="desc">월별 · 콜+챗/채팅 티켓 대비 챗봇 커버리지 5종</div>
           </div>
         </div>
         <div class="chart-wrap"><canvas id="chartMonthly"></canvas></div>
@@ -438,7 +438,7 @@ function renderChatFlow() {
     { type: 'bar', label: '챗봇 자동완결', data: rows.map(r => r.botSolved), backgroundColor: palette.bot, stack: 'a', yAxisID: 'y', borderRadius: 3 },
     { type: 'bar', label: '챗봇 → 상담사', data: rows.map(r => r.botToAgent), backgroundColor: palette.botToAgent, stack: 'a', yAxisID: 'y', borderRadius: 3 },
     { type: 'bar', label: '상담사 직접', data: rows.map(r => r.agentDirect), backgroundColor: palette.agent, stack: 'a', yAxisID: 'y', borderRadius: 3 },
-    { type: 'line', label: '채팅대비 챗봇 종결율(%)', data: rows.map(r => r.chatBotSolveRate), borderColor: palette.detract, backgroundColor: palette.detract, yAxisID: 'y1', tension: 0.35, pointRadius: 3, borderWidth: 2 },
+    { type: 'line', label: '채팅 티켓 대비 챗봇-챗봇 처리율(%)', data: rows.map(r => r.chatBotSolveRate), borderColor: palette.detract, backgroundColor: palette.detract, yAxisID: 'y1', tension: 0.35, pointRadius: 3, borderWidth: 2 },
   ];
 
   if (charts.chatFlow) charts.chatFlow.destroy();
@@ -459,9 +459,11 @@ function renderBotRates() {
     data: {
       labels,
       datasets: [
-        { label: '전체 인입 대비 챗봇 인입율(%)', data: rows.map(r => r.botInflowRate), borderColor: palette.primary, backgroundColor: 'rgba(53, 197, 240, 0.12)', tension: 0.35, fill: true, pointRadius: 3, borderWidth: 2 },
-        { label: '챗봇 자동완결율(%)', data: rows.map(r => r.botSolveRate), borderColor: palette.accent, backgroundColor: 'rgba(255, 122, 0, 0.10)', tension: 0.35, fill: true, pointRadius: 3, borderWidth: 2 },
-        { label: '채팅 인입 대비 챗봇 종결율(%)', data: rows.map(r => r.chatBotSolveRate), borderColor: palette.promote, backgroundColor: 'rgba(69, 178, 107, 0.10)', tension: 0.35, fill: false, pointRadius: 3, borderWidth: 2, borderDash: [4, 3] },
+        { label: '콜+챗 티켓 대비 챗봇 인입율', data: rows.map(r => r.botInflowRate), borderColor: palette.primary, backgroundColor: 'rgba(53, 197, 240, 0.10)', tension: 0.35, fill: true, pointRadius: 2, borderWidth: 2 },
+        { label: '콜+챗 티켓 대비 챗봇-챗봇 처리율', data: rows.map(r => r.botSolveRate), borderColor: palette.accent, backgroundColor: 'rgba(255, 122, 0, 0.08)', tension: 0.35, fill: true, pointRadius: 2, borderWidth: 2 },
+        { label: '콜+챗 티켓 대비 챗봇-상담사 처리율', data: rows.map(r => r.botToAgentRate), borderColor: palette.botToAgent, backgroundColor: palette.botToAgent, tension: 0.35, fill: false, pointRadius: 2, borderWidth: 2, borderDash: [4, 3] },
+        { label: '채팅 티켓 대비 챗봇-챗봇 처리율', data: rows.map(r => r.chatBotSolveRate), borderColor: palette.promote, backgroundColor: palette.promote, tension: 0.35, fill: false, pointRadius: 2, borderWidth: 2 },
+        { label: '커머스) 채팅 티켓 대비 챗봇 단독 처리율', data: rows.map(r => r.chatBotSoloRate), borderColor: palette.detract, backgroundColor: palette.detract, tension: 0.35, fill: false, pointRadius: 2, borderWidth: 2, borderDash: [4, 3] },
       ]
     },
     options: {
@@ -503,9 +505,11 @@ function renderToday() {
     { key: 'botSolved',        label: '챗봇 자동완결',   fmt: v => fmtNum(v) },
     { key: 'botToAgent',       label: '챗봇→상담사',     fmt: v => fmtNum(v) },
     { key: 'agentDirect',      label: '상담사 직접',     fmt: v => fmtNum(v) },
-    { key: 'botInflowRate',    label: '챗봇 인입율',     fmt: v => fmtPct(v) },
-    { key: 'botSolveRate',     label: '챗봇 자동완결율', fmt: v => fmtPct(v) },
-    { key: 'chatBotSolveRate', label: '채팅 자동완결율', fmt: v => fmtPct(v) },
+    { key: 'botInflowRate',    label: '콜+챗 티켓 대비 챗봇 인입율',          fmt: v => fmtPct(v) },
+    { key: 'botSolveRate',     label: '콜+챗 티켓 대비 챗봇-챗봇 처리율',     fmt: v => fmtPct(v) },
+    { key: 'botToAgentRate',   label: '콜+챗 티켓 대비 챗봇-상담사 처리율',   fmt: v => fmtPct(v) },
+    { key: 'chatBotSolveRate', label: '채팅 티켓 대비 챗봇-챗봇 처리율',      fmt: v => fmtPct(v) },
+    { key: 'chatBotSoloRate',  label: '커머스) 채팅 티켓 대비 챗봇 단독 처리율', fmt: v => fmtPct(v) },
   ];
   const head = `<thead><tr><th>날짜</th>${cols.map(c => `<th>${c.label}</th>`).join('')}</tr></thead>`;
   const body = rows.map(r => {
@@ -635,11 +639,11 @@ function renderMonthly() {
     data: {
       labels: rows.map(r => r.label),
       datasets: [
-        { label: '챗봇 인입율(%)', data: rows.map(r => r.botInflowRate), backgroundColor: palette.primary, borderRadius: 6 },
-        { label: '챗봇 자동완결율(%)', data: rows.map(r => r.botSolveRate), backgroundColor: palette.accent, borderRadius: 6 },
-        { label: '채팅 대비 챗봇 종결율(%)', data: rows.map(r => r.chatBotSolveRate), backgroundColor: palette.promote, borderRadius: 6 },
-        { label: '챗봇 NPS(%)', data: rows.map(r => r.npsBot), backgroundColor: '#6366F1', borderRadius: 6 },
-        { label: '상담사 NPS(%)', data: rows.map(r => r.npsAgent), backgroundColor: '#8B5CF6', borderRadius: 6 },
+        { label: '콜+챗 티켓 대비 챗봇 인입율', data: rows.map(r => r.botInflowRate), backgroundColor: palette.primary, borderRadius: 6 },
+        { label: '콜+챗 티켓 대비 챗봇-챗봇 처리율', data: rows.map(r => r.botSolveRate), backgroundColor: palette.accent, borderRadius: 6 },
+        { label: '콜+챗 티켓 대비 챗봇-상담사 처리율', data: rows.map(r => r.botToAgentRate), backgroundColor: palette.botToAgent, borderRadius: 6 },
+        { label: '채팅 티켓 대비 챗봇-챗봇 처리율', data: rows.map(r => r.chatBotSolveRate), backgroundColor: palette.promote, borderRadius: 6 },
+        { label: '커머스) 채팅 티켓 대비 챗봇 단독 처리율', data: rows.map(r => r.chatBotSoloRate), backgroundColor: palette.detract, borderRadius: 6 },
       ]
     },
     options: {
@@ -661,7 +665,9 @@ function renderWeeklyTable() {
   const head = `<thead><tr>
     <th>주차</th><th>기간</th><th>전체 인입</th><th>채팅</th>
     <th>챗봇 자동완결</th><th>챗봇→상담</th><th>상담직접</th>
-    <th>챗봇 인입율</th><th>자동완결율</th><th>챗봇 NPS</th><th>상담사 NPS</th>
+    <th>콜+챗 대비<br>챗봇 인입율</th><th>콜+챗 대비<br>챗봇-챗봇 처리율</th><th>콜+챗 대비<br>챗봇-상담사 처리율</th>
+    <th>채팅 대비<br>챗봇-챗봇 처리율</th><th>커머스) 채팅 대비<br>챗봇 단독 처리율</th>
+    <th>챗봇 NPS</th><th>상담사 NPS</th>
   </tr></thead>`;
   const body = rows.map(r => `<tr>
     <td><strong>${r.label}</strong></td>
@@ -673,6 +679,9 @@ function renderWeeklyTable() {
     <td class="num">${fmtNum(r.agentDirect)}</td>
     <td class="num">${r.botInflowRate.toFixed(2)}%</td>
     <td class="num">${r.botSolveRate.toFixed(2)}%</td>
+    <td class="num">${r.botToAgentRate.toFixed(2)}%</td>
+    <td class="num">${r.chatBotSolveRate.toFixed(2)}%</td>
+    <td class="num">${r.chatBotSoloRate.toFixed(2)}%</td>
     <td class="num">${r.npsBot.toFixed(1)}%</td>
     <td class="num">${r.npsAgent.toFixed(1)}%</td>
   </tr>`).join('');
