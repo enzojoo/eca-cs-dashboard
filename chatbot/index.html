@@ -209,7 +209,7 @@
         <div class="panel-head">
           <div>
             <h3>일별 채팅 인입 흐름</h3>
-            <div class="desc">스택바 = 챗봇·챗봇→상담·상담직접 / 라인 = 채팅 티켓 대비 챗봇-챗봇 처리율(%)</div>
+            <div class="desc">스택바 = 카카오)·인앱웹) 챗봇 단독 · 챗봇→상담사 · 상담사 직접 / 라인 = 채팅 티켓 대비 챗봇-챗봇 처리율(%)</div>
           </div>
         </div>
         <div class="chart-wrap"><canvas id="chartChatFlow"></canvas></div>
@@ -218,7 +218,7 @@
         <div class="panel-head">
           <div>
             <h3>일별 챗봇 커버리지 추이</h3>
-            <div class="desc">종합 현황 시트 커버리지 5종 (%) · 구분값 시트 기준</div>
+            <div class="desc">커버리지 5종 (%) · 시트 건수에서 직접 계산 · 인입 30건 미만인 날(주말 등)은 비율을 내지 않고 선을 끊음</div>
           </div>
         </div>
         <div class="chart-wrap"><canvas id="chartBotRates"></canvas></div>
@@ -589,7 +589,7 @@ function renderOverallSignals() {
   // 채널·서비스 전환 때문에 계열을 그대로 이어 읽으면 안 되는 구간을 명시한다
   items.push(`<strong>7/22 인앱·웹 채팅 전환, 8/1 카카오 종료, 8/19 콜봇 오픈</strong> — 이 지점들 앞뒤로 계열이 끊깁니다. 특히 채팅 지표는 카카오와 인앱을 이어 읽으면 안 됩니다.`);
   const m8 = DATA.monthly.find(m => m.label === '8월'), m7 = DATA.monthly.find(m => m.label === '7월');
-  if (m8 && m7 && m8.npsBot != null && m7.npsBot != null) {
+  if (m8 && m7 && typeof m8.npsBot === 'number' && typeof m7.npsBot === 'number') {
     items.push(`챗봇 NPS 7월 ${m7.npsBot.toFixed(1)}% → 8월 ${m8.npsBot.toFixed(1)}% — 인앱 전환 이후 하락 폭이 큽니다. 채널별 NPS 탭에서 카카오/인앱을 나눠 확인하세요.`);
   }
   ul.innerHTML = items.map(t => `<li>${t}</li>`).join('');
@@ -895,13 +895,13 @@ function renderWeeklyTable() {
     <td class="num">${fmtNum(r.botSolved)}</td>
     <td class="num">${fmtNum(r.botToAgent)}</td>
     <td class="num">${fmtNum(r.agentDirect)}</td>
-    <td class="num">${r.botInflowRate.toFixed(2)}%</td>
-    <td class="num">${r.botSolveRate.toFixed(2)}%</td>
-    <td class="num">${r.botToAgentRate.toFixed(2)}%</td>
-    <td class="num">${r.chatBotSolveRate.toFixed(2)}%</td>
-    <td class="num">${r.chatBotSoloRate.toFixed(2)}%</td>
-    <td class="num">${r.npsBot.toFixed(1)}%</td>
-    <td class="num">${r.npsAgent.toFixed(1)}%</td>
+    <td class="num">${fmtPct(r.botInflowRate)}</td>
+    <td class="num">${fmtPct(r.botSolveRate)}</td>
+    <td class="num">${fmtPct(r.botToAgentRate)}</td>
+    <td class="num">${fmtPct(r.chatBotSolveRate)}</td>
+    <td class="num">${fmtPct(r.chatBotSoloRate)}</td>
+    <td class="num">${fmtPct(r.npsBot)}</td>
+    <td class="num">${fmtPct(r.npsAgent)}</td>
   </tr>`).join('');
   document.getElementById('weeklyTable').innerHTML = head + '<tbody>' + body + '</tbody>';
 }
