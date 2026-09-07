@@ -61,12 +61,14 @@
   .pill strong { color: var(--text); margin-right: 6px; font-weight: 600; }
 
   /* KPI Cards */
-  .kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
+  .kpis { display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; margin-bottom: 24px; }
   .kpi { background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow); position: relative; overflow: hidden; }
   .kpi::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--primary); border-top-left-radius: var(--radius); border-bottom-left-radius: var(--radius); }
   .kpi.kpi-bot::before { background: var(--bot); }
   .kpi.kpi-solve::before { background: var(--accent); }
   .kpi.kpi-nps-bot::before { background: var(--promote); }
+  .kpi.kpi-callbot::before { background: #8B5CF6; }
+  .kpi.kpi-reentry::before { background: var(--detract); }
   .kpi.kpi-nps-agent::before { background: #6366f1; }
   .kpi .label { color: var(--muted); font-size: 12px; margin-bottom: 8px; font-weight: 500; }
   .kpi .value { font-size: 28px; font-weight: 700; letter-spacing: -0.02em; }
@@ -158,20 +160,26 @@
   </div>
 
   <div class="kpis">
-    <div class="kpi kpi-bot">
-      <div class="label">최근일 커머스 챗봇 단독 처리율</div>
-      <div class="value"><span id="kpiSolo">—</span><span class="unit">%</span></div>
-      <div class="sub"><span id="kpiSoloDate">—</span> · <span class="delta" id="kpiSoloDelta">—</span></div>
+    <div class="kpi kpi-callbot">
+      <div class="label">최근일 콜봇 단독 처리율</div>
+      <div class="value"><span id="kpiCbSolo">—</span><span class="unit">%</span></div>
+      <div class="sub"><span id="kpiCbSoloDate">—</span> · 콜 티켓 대비 · <span class="delta" id="kpiCbSoloDelta">—</span></div>
     </div>
     <div class="kpi kpi-solve">
       <div class="label">최근일 채팅 챗봇 단독 처리율</div>
       <div class="value"><span id="kpiChat">—</span><span class="unit">%</span></div>
       <div class="sub">채팅 티켓 대비 · <span class="delta" id="kpiChatDelta">—</span></div>
     </div>
-    <div class="kpi kpi-nps-bot">
-      <div class="label">최근일 콜+챗 챗봇 단독 처리율</div>
+    <div class="kpi kpi-bot">
+      <div class="label">최근일 봇(콜+챗) 단독 처리율</div>
       <div class="value"><span id="kpiCall">—</span><span class="unit">%</span></div>
       <div class="sub">콜+챗 티켓 대비 · <span class="delta" id="kpiCallDelta">—</span></div>
+    </div>
+    <div class="kpi kpi-reentry">
+      <div class="label">콜봇 재인입율 (영업일 24h)</div>
+      <div class="value"><span id="kpiRe">—</span><span class="unit">%</span></div>
+      <div class="sub"><span id="kpiReBase">—</span> · <span class="delta" id="kpiReDelta">—</span></div>
+      <div class="sub" style="font-size:11px; opacity:.75;"><span id="kpiReNote">—</span></div>
     </div>
     <div class="kpi kpi-nps-agent">
       <div class="label">최근일 챗봇 NPS</div>
@@ -182,6 +190,7 @@
 
   <div class="tabs">
     <button class="tab active" data-tab="overall">종합 현황</button>
+    <button class="tab" data-tab="callbot">콜봇</button>
     <button class="tab" data-tab="daily">Daily (오늘)</button>
     <button class="tab" data-tab="nps">NPS 분석</button>
     <button class="tab" data-tab="weekly">주차/월별</button>
@@ -218,6 +227,51 @@
     <div class="insights">
       <h4>⚠️ 살펴볼 시그널</h4>
       <ul id="overallSignals"></ul>
+    </div>
+  </section>
+
+  <!-- Tab: 콜봇 -->
+  <section class="tab-panel" id="tab-callbot">
+    <div class="filter-row">
+      <span class="label">기간:</span>
+      <button class="chip active" data-cbrange="all">콜봇 오픈 이후 전체</button>
+      <button class="chip" data-cbrange="14">최근 14일</button>
+      <button class="chip" data-cbrange="7">최근 7일</button>
+    </div>
+    <div class="panel-grid">
+      <div class="panel tall">
+        <div class="panel-head">
+          <div>
+            <h3>일별 콜 인입 흐름</h3>
+            <div class="desc">스택바 = 콜봇 단독·콜봇→상담사·인계실패·상담사 직행(O2O/기타) / 라인 = IVR 1번 큐 대비 콜봇 인입율(TC, %)</div>
+          </div>
+        </div>
+        <div class="chart-wrap"><canvas id="chartCallFlow"></canvas></div>
+      </div>
+      <div class="panel tall">
+        <div class="panel-head">
+          <div>
+            <h3>콜봇 재인입율 추이</h3>
+            <div class="desc">콜봇이 단독 종결한 콜 기준, 영업일 24시간 내 전화·채팅·게시판 재인입 비중(우연보정 후 순증) · 최근 2영업일은 잠정치</div>
+          </div>
+        </div>
+        <div class="chart-wrap"><canvas id="chartReentry"></canvas></div>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-head">
+        <div>
+          <h3>콜봇 일자별 raw</h3>
+          <div class="desc">콜봇 오픈(2026-08-19) 이후 · 최근 14영업일</div>
+        </div>
+      </div>
+      <div style="overflow-x: auto;">
+        <table class="summary-table" id="callbotRawTable"></table>
+      </div>
+    </div>
+    <div class="insights">
+      <h4>⚠️ 살펴볼 시그널</h4>
+      <ul id="callbotSignals"></ul>
     </div>
   </section>
 
@@ -277,6 +331,15 @@
         </div>
         <div class="chart-wrap"><canvas id="chartNpsCompare"></canvas></div>
       </div>
+    </div>
+    <div class="panel" style="margin-top: 16px;">
+      <div class="panel-head">
+        <div>
+          <h3>채널별 챗봇 NPS (주차)</h3>
+          <div class="desc">카카오(~8/1 종료) vs 인앱/웹(7/22~) · 응답이 없는 주차는 선이 끊깁니다 — 채널 전환 구간의 NPS 차이를 그대로 보기 위함</div>
+        </div>
+      </div>
+      <div class="chart-wrap"><canvas id="chartNpsChannel"></canvas></div>
     </div>
   </section>
 
@@ -342,6 +405,8 @@ Chart.defaults.borderColor = '#E1E2E4';
 
 let DATA = null;
 let rangeFilter = 'all';
+let cbRangeFilter = 'all';
+const CALLBOT_OPEN = '2026-08-19';   // 콜봇 오픈일 — 이전 일자는 콜봇 축이 전부 0이라 제외
 const charts = {};
 
 fetch('./data.json')
@@ -380,17 +445,31 @@ function renderAll() {
   // KPIs
   const last = DATA.daily[DATA.daily.length - 1];
   const prev = DATA.daily[DATA.daily.length - 2];
-  document.getElementById('kpiSolo').textContent = last.chatBotSoloRate.toFixed(2);
-  document.getElementById('kpiSoloDate').textContent = `${last.date} (${last.weekday})`;
-  document.getElementById('kpiSoloDelta').outerHTML = deltaBadge(last.chatBotSoloRate, prev?.chatBotSoloRate);
+  document.getElementById('kpiCbSolo').textContent = (last.cbSoloOfCall ?? 0).toFixed(2);
+  document.getElementById('kpiCbSoloDate').textContent = `${last.date} (${last.weekday})`;
+  document.getElementById('kpiCbSoloDelta').outerHTML = deltaBadge(last.cbSoloOfCall, prev?.cbSoloOfCall);
 
-  document.getElementById('kpiChat').textContent = last.chatBotSolveRate.toFixed(2);
+  document.getElementById('kpiChat').textContent = (last.chatBotSolveRate ?? 0).toFixed(2);
   document.getElementById('kpiChatDelta').outerHTML = deltaBadge(last.chatBotSolveRate, prev?.chatBotSolveRate);
 
-  document.getElementById('kpiCall').textContent = last.botSolveRate.toFixed(2);
+  document.getElementById('kpiCall').textContent = (last.botSolveRate ?? 0).toFixed(2);
   document.getElementById('kpiCallDelta').outerHTML = deltaBadge(last.botSolveRate, prev?.botSolveRate);
 
-  document.getElementById('kpiNpsBot').textContent = last.npsBot.toFixed(1);
+  // 재인입은 우연보정 창이 늦게 닫혀 최근 2영업일이 부풀려진다 → 확정 구간의 마지막 날을 쓰고,
+  // 잠정치는 따로 병기한다. 잠정치를 그냥 KPI로 띄우면 개선/악화를 오독하게 된다.
+  const reRows = DATA.daily.filter(d => d.reRate != null && d.reBase > 0);
+  const prov = reRows.slice(-2);                       // 잠정
+  const conf = reRows.slice(0, -2);                    // 확정
+  const re = conf[conf.length - 1], rePrev = conf[conf.length - 2];
+  document.getElementById('kpiRe').textContent = re ? re.reRate.toFixed(1) : '—';
+  document.getElementById('kpiReBase').textContent = re ? `${re.date.slice(5)} 확정 · 모수 ${fmtNum(re.reBase)}` : '—';
+  document.getElementById('kpiReDelta').outerHTML = deltaBadge(re?.reRate, rePrev?.reRate);
+  if (prov.length) {
+    const p = prov[prov.length - 1];
+    document.getElementById('kpiReNote').textContent = `잠정 ${p.date.slice(5)} ${p.reRate.toFixed(1)}%`;
+  }
+
+  document.getElementById('kpiNpsBot').textContent = (last.npsBot ?? 0).toFixed(1);
   const npsCount = last.npsBotPromote + last.npsBotNeutral + last.npsBotDetract;
   document.getElementById('kpiNpsBotCount').textContent = npsCount;
   document.getElementById('kpiNpsBotDelta').outerHTML = deltaBadge(last.npsBot, prev?.npsBot);
@@ -417,9 +496,25 @@ function renderAll() {
     });
   });
 
+  // 콜봇 탭 기간 칩
+  document.querySelectorAll('.chip[data-cbrange]').forEach(chip => {
+    chip.addEventListener('click', () => {
+      document.querySelectorAll('.chip[data-cbrange]').forEach(c => c.classList.remove('active'));
+      chip.classList.add('active');
+      cbRangeFilter = chip.dataset.cbrange;
+      renderCallFlow();
+      renderReentry();
+    });
+  });
+
   renderChatFlow();
   renderBotRates();
   renderOverallSignals();
+  renderCallFlow();
+  renderReentry();
+  renderCallbotRaw();
+  renderCallbotSignals();
+  renderNpsChannel();
   renderToday();
   renderNpsBot();
   renderNpsAgent();
@@ -434,10 +529,12 @@ function renderAll() {
 function renderChatFlow() {
   const rows = getFilteredDaily();
   const labels = rows.map(r => r.date.slice(5));
+  // 카카오(~8/1 종료)와 인앱/웹(7/22~)을 나눠 보여야 전환 구간의 계단이 설명된다
   const datasets = [
-    { type: 'bar', label: '챗봇 자동완결', data: rows.map(r => r.botSolved), backgroundColor: palette.bot, stack: 'a', yAxisID: 'y', borderRadius: 3 },
-    { type: 'bar', label: '챗봇 → 상담사', data: rows.map(r => r.botToAgent), backgroundColor: palette.botToAgent, stack: 'a', yAxisID: 'y', borderRadius: 3 },
-    { type: 'bar', label: '상담사 직접', data: rows.map(r => r.agentDirect), backgroundColor: palette.agent, stack: 'a', yAxisID: 'y', borderRadius: 3 },
+    { type: 'bar', label: '카카오) 챗봇 단독', data: rows.map(r => r.kkSolved), backgroundColor: '#9BE0F7', stack: 'a', yAxisID: 'y', borderRadius: 3 },
+    { type: 'bar', label: '인앱/웹) 챗봇 단독', data: rows.map(r => r.iaSolved), backgroundColor: palette.bot, stack: 'a', yAxisID: 'y', borderRadius: 3 },
+    { type: 'bar', label: '챗봇 → 상담사', data: rows.map(r => r.kkToAgent + r.iaToAgent), backgroundColor: palette.botToAgent, stack: 'a', yAxisID: 'y', borderRadius: 3 },
+    { type: 'bar', label: '상담사 직접', data: rows.map(r => r.kkAgentDirect + r.iaAgentDirect), backgroundColor: palette.agent, stack: 'a', yAxisID: 'y', borderRadius: 3 },
     { type: 'line', label: '채팅 티켓 대비 챗봇-챗봇 처리율(%)', data: rows.map(r => r.chatBotSolveRate), borderColor: palette.detract, backgroundColor: palette.detract, yAxisID: 'y1', tension: 0.35, pointRadius: 3, borderWidth: 2 },
   ];
 
@@ -489,10 +586,131 @@ function renderOverallSignals() {
     const worst = detractDays.reduce((a, b) => a.npsBot < b.npsBot ? a : b);
     items.push(`챗봇 NPS 30% 이하 일자 <strong>${detractDays.length}건</strong> · 최저 ${worst.date} (${worst.npsBot}%, 응답 ${worst.npsBotPromote+worst.npsBotNeutral+worst.npsBotDetract}건) · 시나리오 회고 권장`);
   }
+  // 채널·서비스 전환 때문에 계열을 그대로 이어 읽으면 안 되는 구간을 명시한다
+  items.push(`<strong>7/22 인앱·웹 채팅 전환, 8/1 카카오 종료, 8/19 콜봇 오픈</strong> — 이 지점들 앞뒤로 계열이 끊깁니다. 특히 채팅 지표는 카카오와 인앱을 이어 읽으면 안 됩니다.`);
+  const m8 = DATA.monthly.find(m => m.label === '8월'), m7 = DATA.monthly.find(m => m.label === '7월');
+  if (m8 && m7 && m8.npsBot != null && m7.npsBot != null) {
+    items.push(`챗봇 NPS 7월 ${m7.npsBot.toFixed(1)}% → 8월 ${m8.npsBot.toFixed(1)}% — 인앱 전환 이후 하락 폭이 큽니다. 채널별 NPS 탭에서 카카오/인앱을 나눠 확인하세요.`);
+  }
   ul.innerHTML = items.map(t => `<li>${t}</li>`).join('');
 }
 
 function average(arr) { const v = arr.filter(x => x != null); return v.length ? v.reduce((s,x)=>s+x,0)/v.length : 0; }
+
+// ---- 콜봇 탭 ----
+function getCallbotDaily() {
+  const all = DATA.daily.filter(d => d.date >= CALLBOT_OPEN);
+  if (cbRangeFilter === 'all') return all;
+  return all.slice(-parseInt(cbRangeFilter, 10));
+}
+
+function renderCallFlow() {
+  const rows = getCallbotDaily();
+  const labels = rows.map(r => r.date.slice(5));
+  if (charts.callFlow) charts.callFlow.destroy();
+  charts.callFlow = new Chart(document.getElementById('chartCallFlow'), {
+    type: 'bar',
+    data: { labels, datasets: [
+      { type: 'bar', label: '콜봇 단독 처리', data: rows.map(r => r.cbSolved), backgroundColor: '#8B5CF6', stack: 'a', yAxisID: 'y', borderRadius: 3 },
+      { type: 'bar', label: '콜봇 → 상담사', data: rows.map(r => r.cbToAgent), backgroundColor: palette.botToAgent, stack: 'a', yAxisID: 'y', borderRadius: 3 },
+      { type: 'bar', label: '인계 실패', data: rows.map(r => r.cbFail), backgroundColor: palette.detract, stack: 'a', yAxisID: 'y', borderRadius: 3 },
+      { type: 'bar', label: '상담사 직행 (O2O/기타)', data: rows.map(r => r.agentDirect - r.kkAgentDirect - r.iaAgentDirect), backgroundColor: palette.agent, stack: 'a', yAxisID: 'y', borderRadius: 3 },
+      { type: 'line', label: 'IVR 1번 대비 콜봇 인입율 TC(%)', data: rows.map(r => r.cbTcRate), borderColor: palette.accent, backgroundColor: palette.accent, yAxisID: 'y1', tension: 0.35, pointRadius: 3, borderWidth: 2 },
+    ]},
+    options: chartOptionsStacked('콜 티켓수', 'TC(%)')
+  });
+}
+
+function renderReentry() {
+  const rows = getCallbotDaily().filter(r => r.reBase > 0);
+  const labels = rows.map(r => r.date.slice(5));
+  if (charts.reentry) charts.reentry.destroy();
+  charts.reentry = new Chart(document.getElementById('chartReentry'), {
+    type: 'line',
+    data: { labels, datasets: [
+      { label: '재인입율 (순증)', data: rows.map(r => r.reRate), borderColor: palette.detract, backgroundColor: 'rgba(240, 54, 89, 0.08)', tension: 0.3, fill: true, pointRadius: 3, borderWidth: 2 },
+      { label: '같은 용건 재인입율', data: rows.map(r => r.reTopicRate), borderColor: palette.accent, backgroundColor: palette.accent, tension: 0.3, fill: false, pointRadius: 2, borderWidth: 2, borderDash: [4, 3] },
+    ]},
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      scales: { x: { grid: { display: false } },
+                y: { beginAtZero: true, ticks: { callback: v => v + '%' }, grid: { color: '#F1F1F3' } } },
+      plugins: { legend: { position: 'bottom', labels: { boxWidth: 12 } },
+                 tooltip: { callbacks: { label: ctx => `${ctx.dataset.label}: ${ctx.parsed.y == null ? '—' : ctx.parsed.y.toFixed(1) + '%'}` } } }
+    }
+  });
+}
+
+function renderCallbotRaw() {
+  const rows = DATA.daily.filter(d => d.date >= CALLBOT_OPEN).slice(-14);
+  const cols = [
+    { key: 'call',           label: '콜 인입',            fmt: fmtNum },
+    { key: 'cbQueue',        label: 'IVR 1번 큐',         fmt: fmtNum },
+    { key: 'cbTcRate',       label: '콜봇 인입율(TC)',     fmt: fmtPct },
+    { key: 'cbSolved',       label: '콜봇 단독',           fmt: fmtNum },
+    { key: 'cbToAgent',      label: '콜봇→상담사',         fmt: fmtNum },
+    { key: 'cbFail',         label: '인계 실패',           fmt: fmtNum },
+    { key: 'cbSoloOfBot',    label: '콜봇 응대 대비 단독율', fmt: fmtPct },
+    { key: 'cbSoloOfCall',   label: '콜 대비 단독율',       fmt: fmtPct },
+    { key: 'reBase',         label: '재인입 모수',          fmt: fmtNum },
+    { key: 'reRate',         label: '재인입율',            fmt: fmtPct },
+    { key: 'reTopicRate',    label: '같은용건 재인입율',     fmt: fmtPct },
+  ];
+  const head = `<thead><tr><th>날짜</th>${cols.map(c => `<th>${c.label}</th>`).join('')}</tr></thead>`;
+  const body = rows.map(r => {
+    const cells = cols.map(c => {
+      const v = r[c.key];
+      return `<td class="${(v === 0 || v == null) ? 'num zero' : 'num'}">${c.fmt(v)}</td>`;
+    }).join('');
+    return `<tr><td>${r.date} (${r.weekday})</td>${cells}</tr>`;
+  }).join('');
+  document.getElementById('callbotRawTable').innerHTML = `${head}<tbody>${body}</tbody>`;
+}
+
+function renderCallbotSignals() {
+  const ul = document.getElementById('callbotSignals');
+  const rows = DATA.daily.filter(d => d.date >= CALLBOT_OPEN);
+  const items = [];
+  if (!rows.length) { ul.innerHTML = '<li>콜봇 데이터가 아직 없습니다.</li>'; return; }
+
+  const re = rows.filter(r => r.reBase > 0 && r.reRate != null);
+  if (re.length) {
+    const avg = average(re.map(r => r.reRate));
+    items.push(`콜봇 단독종결 건의 <strong>재인입율 평균 ${avg.toFixed(1)}%</strong> — 사람 상담사 직행(IVR 3번)은 같은 방식으로 재면 10% 안팎입니다. 단독종결 구간이 병목입니다.`);
+    items.push(`최근 2영업일은 <strong>잠정치</strong>입니다 — 우연보정 창이 아직 안 닫혀 실제보다 높게 나오고, 며칠 뒤 롤링 재계산에서 내려갑니다.`);
+  }
+  const fail = rows.reduce((s, r) => s + (r.cbFail || 0), 0);
+  if (fail > 0) {
+    items.push(`인계 실패(상담원 연결 중 고객 선 종료) 누적 <strong>${fmtNum(fail)}건</strong> — 재인입율이 가장 높은 구간이라 별도 관리가 필요합니다.`);
+  }
+  const tc = rows.filter(r => r.cbTcRate != null).slice(-1)[0];
+  if (tc) items.push(`최근 IVR 1번 큐 대비 콜봇 인입율(TC) <strong>${tc.cbTcRate.toFixed(1)}%</strong> · 콜봇 대상 큐 ${fmtNum(tc.cbQueue)}건`);
+  ul.innerHTML = items.map(t => `<li>${t}</li>`).join('');
+}
+
+// ---- 채널별 챗봇 NPS ----
+function renderNpsChannel() {
+  const el = document.getElementById('chartNpsChannel');
+  if (!el) return;
+  const rows = DATA.weekly.filter(w => (w.npsKakaoN || 0) + (w.npsInappN || 0) > 0);
+  if (charts.npsChannel) charts.npsChannel.destroy();
+  charts.npsChannel = new Chart(el, {
+    type: 'line',
+    data: { labels: rows.map(w => w.label), datasets: [
+      { label: '카카오 챗봇 NPS', data: rows.map(w => (w.npsKakaoN > 0 ? w.npsKakao : null)), borderColor: '#9BE0F7', backgroundColor: '#9BE0F7', tension: 0.3, pointRadius: 3, borderWidth: 2, spanGaps: false },
+      { label: '인앱/웹 챗봇 NPS', data: rows.map(w => (w.npsInappN > 0 ? w.npsInapp : null)), borderColor: palette.primary, backgroundColor: palette.primary, tension: 0.3, pointRadius: 3, borderWidth: 2, spanGaps: false },
+    ]},
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      scales: { x: { grid: { display: false } },
+                y: { beginAtZero: true, ticks: { callback: v => v + '%' }, grid: { color: '#F1F1F3' } } },
+      plugins: { legend: { position: 'bottom', labels: { boxWidth: 12 } },
+                 tooltip: { callbacks: { label: ctx => `${ctx.dataset.label}: ${ctx.parsed.y == null ? '응답 없음' : ctx.parsed.y.toFixed(1) + '%'}` } } }
+    }
+  });
+}
 
 // ---- Daily tab ----
 function renderToday() {
